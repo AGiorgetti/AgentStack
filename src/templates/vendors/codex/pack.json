@@ -1,0 +1,6 @@
+{
+  "id": "codex",
+  "displayName": "Codex",
+  "description": "Codex instructions and README placeholders.",
+  "paths": [".codex/**"]
+}

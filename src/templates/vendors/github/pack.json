@@ -1,0 +1,6 @@
+{
+  "id": "github",
+  "displayName": "GitHub",
+  "description": "PR template, issue templates, workflows, Copilot instructions.",
+  "paths": [".github/**"]
+}

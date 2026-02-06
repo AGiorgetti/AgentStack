@@ -1,0 +1,28 @@
+# AGENTSTACK PLACEHOLDER
+# Purpose: Gather feature requests in a structured way.
+# What to put here: Replace TODO prompts with project-specific guidance.
+name: "Feature request"
+description: "Suggest a new feature or enhancement"
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: TODO: What problem does this feature solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: TODO: Describe the solution or desired outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: TODO: List other options you've evaluated.
+    validations:
+      required: false

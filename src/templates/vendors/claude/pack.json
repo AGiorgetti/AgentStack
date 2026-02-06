@@ -1,0 +1,6 @@
+{
+  "id": "claude",
+  "displayName": "Claude",
+  "description": "Claude instructions and README placeholders.",
+  "paths": [".claude/**"]
+}

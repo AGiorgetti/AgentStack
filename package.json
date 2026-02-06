@@ -1,0 +1,20 @@
+{
+  "name": "agentstack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AgentStack scaffolder with pluggable, vendor-agnostic packs.",
+  "main": "dist/index.js",
+  "bin": {
+    "agentstack": "dist/bin.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "tsx src/bin.ts",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.5.4"
+  }
+}

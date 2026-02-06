@@ -1,0 +1,6 @@
+{
+  "id": "neutral",
+  "displayName": "Vendor-neutral files",
+  "description": "AGENTS.md and CONTEXT.md placeholders.",
+  "paths": ["AGENTS.md", "CONTEXT.md"]
+}

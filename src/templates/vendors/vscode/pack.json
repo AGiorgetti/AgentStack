@@ -1,0 +1,6 @@
+{
+  "id": "vscode",
+  "displayName": "Visual Studio Code",
+  "description": "VS Code recommendations and settings placeholders.",
+  "paths": [".vscode/**"]
+}

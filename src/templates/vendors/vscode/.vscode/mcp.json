@@ -1,0 +1,9 @@
+{
+  "servers": [
+    {
+      "name": "REPLACE_WITH_SERVER_NAME",
+      "command": "REPLACE_WITH_COMMAND",
+      "args": ["REPLACE_WITH_ARGS"]
+    }
+  ]
+}

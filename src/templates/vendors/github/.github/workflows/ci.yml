@@ -1,0 +1,13 @@
+# AGENTSTACK PLACEHOLDER
+# Purpose: CI workflow used by agents and humans.
+# What to put here: Add build/test steps matching your stack.
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: TODO: Add build/test steps
+        run: |
+          echo "Replace with build/test commands"
