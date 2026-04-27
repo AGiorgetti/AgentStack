@@ -1,8 +1,4 @@
 {
-  "allowAgentDecomposition": true,
-  "allowAgentAutoStartChildren": false,
   "requireHumanReviewBeforeMerge": true,
-  "allowAgentToCloseItems": false,
-  "requireAcceptanceCriteria": true,
-  "claimTtlMinutes": 120
+  "requireAcceptanceCriteria": true
 }

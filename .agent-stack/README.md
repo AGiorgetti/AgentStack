@@ -11,6 +11,15 @@ This folder contains the repository-local AgentStack Protocol assets consumed by
 - `trackers/<tracker>.config.json`: repository-specific tracker connection/configuration. This file must not contain placeholders.
 - `policy/AGENT-POLICY.json`: execution policy gates for autonomous agents.
 
+## Policy
+
+`.agent-stack/policy/AGENT-POLICY.json` is the repository-local execution policy. The CLI loads it for workflow decisions and falls back to built-in recommended defaults if it is missing.
+
+Policy fields:
+
+- `requireAcceptanceCriteria`: used by `work-item graph` and `work-item claim` when calculating whether an item can start. If true, claim requires parsed acceptance criteria unless `--force` is used.
+- `requireHumanReviewBeforeMerge`: reported by `work-item handoff` as `reviewRequired`.
+
 ## Skills
 
 Skills do **not** live under `.agent-stack`.

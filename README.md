@@ -80,6 +80,8 @@ If `AGENTS.md` already exists, setup preserves it and inserts or updates only th
 <!-- agentstack-protocol:end -->
 ```
 
+`policy/AGENT-POLICY.json` is loaded by the CLI for workflow decisions. It only contains fields currently used by the CLI: `requireAcceptanceCriteria` affects `work-item graph` and `work-item claim`, and `requireHumanReviewBeforeMerge` affects `work-item handoff` output.
+
 ## Agent usage
 
 Agents should use the CLI instead of calling tracker-native commands directly for normal protocol work:
