@@ -1,0 +1,65 @@
+{
+  "name": "@agentstack/cli",
+  "version": "0.1.1",
+  "description": "AgentStack CLI: command-line tooling for AgentStack Protocol, tracker setup, canonical backlog language, and AI-agent workflow coordination.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "agentstack": "./dist/agentstack.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    },
+    "./github": {
+      "types": "./dist/github.d.ts",
+      "default": "./dist/github.js"
+    },
+    "./azure-devops": {
+      "types": "./dist/azure-devops.d.ts",
+      "default": "./dist/azure-devops.js"
+    }
+  },
+  "files": [
+    "dist/",
+    ".agent-stack/",
+    ".agents/skills/",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "npm run build",
+    "test": "node --test tests/*.test.mjs",
+    "test:github": "node --test tests/github.adapter.test.mjs",
+    "test:azure-devops": "node --test tests/azure-devops.adapter.test.mjs"
+  },
+  "keywords": [
+    "agents",
+    "codex",
+    "claude",
+    "copilot",
+    "github",
+    "azure-devops",
+    "workflow",
+    "protocol",
+    "cli"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": ">=5.8.0"
+  },
+  "dependencies": {
+    "yaml": "^2.8.3"
+  }
+}

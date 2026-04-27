@@ -1,0 +1,64 @@
+version: 1
+tracker: azure-devops
+
+work_item:
+  native_entity: work-item
+
+types:
+  epic:
+    work_item_type: Epic
+  feature:
+    work_item_type: Feature
+  story:
+    work_item_type:
+      - User Story
+      - Product Backlog Item
+  task:
+    work_item_type: Task
+  bug:
+    work_item_type: Bug
+  spike:
+    tag: type:spike
+
+execution_mode:
+  agent:
+    field: Custom.ExecutionMode
+    value: agent
+    fallback_tag: exec:agent
+  human:
+    field: Custom.ExecutionMode
+    value: human
+    fallback_tag: exec:human
+
+readiness:
+  ready_for_agent:
+    field: Custom.ReadyForAgent
+    value: true
+    fallback_tag: ready:agent
+
+protocol_states:
+  field: Custom.AgentProtocolState
+  fallback_tag_prefix: 'state:'
+
+priority:
+  field: Microsoft.VSTS.Common.Priority
+
+relations:
+  parent:
+    relation_type: System.LinkTypes.Hierarchy-Reverse
+  child:
+    relation_type: System.LinkTypes.Hierarchy-Forward
+  blocked-by:
+    relation_type: System.LinkTypes.Dependency-Reverse
+  blocks:
+    relation_type: System.LinkTypes.Dependency-Forward
+  related:
+    relation_type: System.LinkTypes.Related
+
+agent_assignment:
+  field: Custom.AssignedAgent
+  fallback_tag_prefix: 'agent:'
+
+claim:
+  field: Custom.AgentClaimToken
+  fallback_comment_marker: '<!-- agentstack-protocol:claim -->'
