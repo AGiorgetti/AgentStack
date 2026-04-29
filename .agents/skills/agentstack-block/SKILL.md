@@ -24,7 +24,7 @@ Use this skill when safe progress is impossible because of ambiguity, missing de
 ## Commands
 
 1. Run `agentstack work-item block <id> --reason <text>`.
-2. If abandoning the work, run `agentstack work-item release <id> --claim-token <token>`.
+2. If abandoning the work, run `agentstack work-item release <id>`.
 
 ## Decision rules
 

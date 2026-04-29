@@ -62,6 +62,7 @@ Setup creates or updates:
 AGENTS.md
 .agent-stack/
   active-tracker.json
+  PROMPTS.md
   protocol/AGENT-PROTOCOL.md
   language/backlog-language.yaml
   policy/AGENT-POLICY.json
@@ -69,6 +70,7 @@ AGENTS.md
   trackers/<active-tracker>.config.json
 .agents/
   skills/agentstack-*/SKILL.md
+  skills/git-worktree-ops/SKILL.md
 ```
 
 Inactive tracker files are not deployed.
@@ -129,12 +131,64 @@ Agents should use the CLI instead of calling tracker-native commands directly fo
 agentstack doctor
 agentstack work-item get 123
 agentstack work-item graph 123
-agentstack work-item claim 123 --agent codex-01
+# create or enter an isolated workspace/worktree for item 123
+agentstack agent identity init
+agentstack work-item claim 123 --branch agentstack/123 --workspace ../agentstack-worktrees/123
 agentstack work-item progress 123 --message "Implementation started."
 agentstack work-item submit-review 123 --pr https://github.com/OWNER/REPO/pull/456
 ```
 
 All non-setup command output is JSON.
+
+Reusable human prompt templates for starting intake, assigning a specific item, blocking, resuming after resolution, or submitting review live in `.agent-stack/PROMPTS.md`. Agents do not need that file during execution; they should use `AGENTS.md`, protocol assets, skills, and `agentstack help ... --json`.
+
+## Agent identity
+
+Claims need an agent identity. You can provide one explicitly:
+
+```sh
+agentstack work-item claim 123 --agent codex/aless-laptop
+```
+
+Or let the CLI create a local identity:
+
+```sh
+agentstack agent identity init
+agentstack agent identity show
+agentstack work-item claim 123
+```
+
+The local identity is stored in `.agent-stack/local/agent-identity.json` and should not be committed. It gives a stable default `agentId` across sessions in the same repo/workspace. For concurrent agent work, initialize identity inside the dedicated worktree that will own the claim.
+
+`claimToken` is different from `agentId`: `agentId` says who owns the claim, while `claimToken` proves ownership of that specific claim. Successful claims save the token locally under `.agent-stack/runs/<id>/claim.json`, so later commands can use it by default:
+
+```sh
+agentstack work-item release 123
+```
+
+Use `--agent` and `--claim-token` when running from CI or from a workspace that does not have local identity/claim state.
+
+## Concurrent agents
+
+When multiple agents may work at the same time, each work item should use a dedicated git worktree or equivalent isolated workspace. The main checkout should be used for setup, fetch, intake, and orchestration; implementation should happen in the per-item worktree.
+
+Recommended startup:
+
+```sh
+# from the coordination checkout
+git fetch origin
+agentstack work-item get 123
+agentstack work-item graph 123
+
+git worktree add ../agentstack-worktrees/123 -b agentstack/123 origin/main
+cd ../agentstack-worktrees/123
+
+agentstack agent identity init
+agentstack work-item claim 123 --branch agentstack/123 --workspace ../agentstack-worktrees/123
+agentstack work-item plan 123 --message "..."
+```
+
+Claim from inside the worktree that will perform the implementation. This keeps the identity file, claim token, git index, branch, build artifacts, and local runtime state isolated from other agents.
 
 ## Generated Help
 
@@ -171,7 +225,7 @@ agentstack setup --tracker github --github-repository OWNER/REPO [--target <repo
 agentstack setup --tracker azure-devops --azdo-organization <url> --azdo-project <project> [--azdo-team <team>] [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]
 ```
 
-Use it to create or refresh `.agent-stack`, `.agents/skills/agentstack-*`, and the managed AgentStack block in `AGENTS.md`. It deploys only the selected tracker profile. With `--provision-tracker`, GitHub labels are created or updated; Azure DevOps setup checks the Azure DevOps CLI path and verifies access to the configured project because the default profile uses tags.
+Use it to create or refresh `.agent-stack`, `.agents/skills/agentstack-*`, `.agents/skills/git-worktree-ops`, and the managed AgentStack block in `AGENTS.md`. It deploys only the selected tracker profile. With `--provision-tracker`, GitHub labels are created or updated; Azure DevOps setup checks the Azure DevOps CLI path and verifies access to the configured project because the default profile uses tags.
 
 ### `agentstack doctor`
 
@@ -182,6 +236,17 @@ agentstack doctor [--repo <repo>]
 ```
 
 Use this before agent work or after setup changes. It checks repository-local protocol files, active tracker configuration, language validation, and tracker mapping validation. Output includes an `ok` boolean plus file and validation details.
+
+### `agentstack agent identity`
+
+Creates or displays the local agent identity used as the default claim identity.
+
+```sh
+agentstack agent identity init [--agent <agent-id>] [--provider <name>] [--repo <repo>]
+agentstack agent identity show [--repo <repo>]
+```
+
+Use this before claim if you want a predictable local `agentId`. If omitted, `work-item claim` creates the identity automatically. The file is local runtime state under `.agent-stack/local/agent-identity.json`. For concurrent work, run this inside the dedicated worktree before claiming.
 
 ### `agentstack language validate`
 
@@ -238,20 +303,22 @@ Use this before claiming work. It returns parent, children, blockers, blocked it
 Registers an autonomous execution claim on a work item.
 
 ```sh
-agentstack work-item claim <id> --agent <agent-id> [--branch <name>] [--workspace <path>] [--force] [--repo <repo>]
+agentstack work-item claim <id> [--agent <agent-id>] [--branch <name>] [--workspace <path>] [--force] [--repo <repo>]
 ```
 
-Use this immediately before implementation starts. It checks eligibility, writes protocol state `claimed`, adds the active claim marker, and records claim metadata as a tracker comment. `--force` bypasses eligibility failures for controlled smoke tests or human-approved exceptions.
+Use this immediately before planning and implementation starts, from inside the isolated workspace that will do the work. It checks eligibility, writes protocol state `claimed`, adds the active claim marker, and records claim metadata as a tracker comment. If `--agent` is omitted, the CLI uses or creates the local agent identity. `--force` bypasses eligibility failures for controlled smoke tests or human-approved exceptions.
+
+The generated claim token is saved under `.agent-stack/runs/<id>/claim.json` for later release or future resume operations.
 
 ### `agentstack work-item release`
 
 Releases an active claim marker from a work item.
 
 ```sh
-agentstack work-item release <id> --claim-token <token> [--repo <repo>]
+agentstack work-item release <id> [--claim-token <token>] [--repo <repo>]
 ```
 
-Use this when an agent abandons or hands back work without completing it. It removes the active claim marker and records a release comment. Historical claim comments remain for audit, but released claims are not reported as active by `work-item get`.
+Use this when an agent abandons or hands back work without completing it. It removes the active claim marker and records a release comment. If `--claim-token` is omitted, the CLI reads `.agent-stack/runs/<id>/claim.json`. Historical claim comments remain for audit, but released claims are not reported as active by `work-item get`.
 
 ### `agentstack work-item state`
 
@@ -294,7 +361,7 @@ agentstack work-item plan <id> --message <text> [--repo <repo>]
 agentstack work-item plan <id> --file <path> [--repo <repo>]
 ```
 
-Use this after claim and before code changes. It records the plan as a protocol comment, sets state `implementing`, and appends a local execution-plan event.
+Use this after graph, workspace bootstrap, identity initialization, and claim, before code changes. It records the plan as a protocol comment, sets state `implementing`, and appends a local execution-plan event.
 
 ### `agentstack work-item submit-review`
 
@@ -411,6 +478,7 @@ agentstack setup \
 agentstack doctor --repo .
 agentstack language validate --repo .
 agentstack mapping validate --repo .
+agentstack agent identity init --agent codex-smoke --repo .
 
 gh issue create \
   --title "AgentStack smoke test" \
@@ -425,7 +493,7 @@ gh issue create \
 
 agentstack work-item get 1 --repo .
 agentstack work-item graph 1 --repo .
-agentstack work-item claim 1 --agent codex-smoke --repo . --force
+agentstack work-item claim 1 --repo . --force
 agentstack work-item progress 1 --message "Smoke claim succeeded." --repo .
 agentstack work-item plan 1 --message "Smoke-test the AgentStack protocol command flow." --repo .
 agentstack work-item submit-review 1 --pr https://github.com/OWNER/agentstack-smoke/pull/1 --summary "Smoke flow completed through submit-review." --repo .
@@ -459,6 +527,7 @@ agentstack setup \
 agentstack doctor --repo .
 agentstack language validate --repo .
 agentstack mapping validate --repo .
+agentstack agent identity init --agent codex-smoke --repo .
 ```
 
 Add `--azdo-team TEAM` to setup if the project uses a specific Azure Boards team context.
@@ -480,7 +549,7 @@ The Azure CLI prints the created work item JSON. Use its `id` in the following c
 ```sh
 agentstack work-item get <id> --repo .
 agentstack work-item graph <id> --repo .
-agentstack work-item claim <id> --agent codex-smoke --repo . --force
+agentstack work-item claim <id> --repo . --force
 agentstack work-item progress <id> --message "Smoke claim succeeded." --repo .
 agentstack work-item plan <id> --message "Smoke-test the AgentStack protocol command flow." --repo .
 agentstack work-item submit-review <id> --pr https://dev.azure.com/ORG/PROJECT/_git/REPO/pullrequest/1 --summary "Smoke flow completed through submit-review." --repo .

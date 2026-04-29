@@ -25,7 +25,7 @@ Use this skill when the agent needs to discover eligible backlog work or choose 
 
 1. Run `agentstack work-item intake --limit <n>`.
 2. For a candidate, run `agentstack work-item get <id>`.
-3. Before claiming, hand off to `agentstack-tracker-graph` and `agentstack-tracker-claim`.
+3. Before claiming, hand off to `agentstack-tracker-graph`, then `agentstack-work-bootstrap`, then `agentstack-tracker-claim`.
 
 ## Decision rules
 

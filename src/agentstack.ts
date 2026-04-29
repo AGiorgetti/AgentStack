@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, appendFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, appendFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -27,6 +27,18 @@ interface CliContext {
   policy: ExecutionPolicy;
   platform: Platform;
   config: Record<string, unknown>;
+}
+
+interface AgentIdentity {
+  agentId: string;
+  provider: string;
+  createdAt: string;
+}
+
+interface LocalClaimRecord {
+  workItem: WorkItemRef;
+  claim: ClaimInfo;
+  savedAt: string;
 }
 
 type ParsedArgs = {
@@ -80,6 +92,11 @@ async function main(argv: string[]): Promise<void> {
     return;
   }
 
+  if (command === 'agent') {
+    await handleAgentCommand(subcommand, rest, parsed);
+    return;
+  }
+
   if (command !== 'work-item') {
     throw new Error(`Unknown command: ${command}`);
   }
@@ -89,6 +106,29 @@ async function main(argv: string[]): Promise<void> {
   }
 
   await handleWorkItemCommand(subcommand, rest, parsed);
+}
+
+async function handleAgentCommand(subcommand: string | undefined, rest: string[], parsed: ParsedArgs): Promise<void> {
+  if (subcommand !== 'identity') {
+    throw new Error(`Unknown agent subcommand: ${subcommand ?? ''}`.trim());
+  }
+
+  const action = rest[0] ?? 'show';
+  const repoRoot = getRepoRoot(parsed);
+  switch (action) {
+    case 'init': {
+      const identity = ensureAgentIdentity(repoRoot, parsed);
+      await printJson({ initialized: true, identity, path: agentIdentityPath(repoRoot) });
+      return;
+    }
+    case 'show': {
+      const identity = getAgentIdentity(repoRoot);
+      await printJson({ found: Boolean(identity), identity: identity ?? null, path: agentIdentityPath(repoRoot) });
+      return;
+    }
+    default:
+      throw new Error(`Unknown agent identity action: ${action}`);
+  }
 }
 
 async function handleWorkItemCommand(subcommand: string, rest: string[], parsed: ParsedArgs): Promise<void> {
@@ -135,7 +175,7 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
 
     case 'claim': {
       const id = requireArg(rest[0], 'work item id');
-      const agentId = requireFlag(parsed, 'agent');
+      const agentId = getStringFlag(parsed, 'agent') ?? ensureAgentIdentity(context.repoRoot, parsed).agentId;
       const ref = makeRef(context, id);
       const item = await context.tracker.getWorkItem(ref);
       const dependencies = await context.tracker.getDependencyStatus(ref);
@@ -155,6 +195,7 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
       if (workspaceId) claimOptions.workspaceId = workspaceId;
       const claim = createClaimInfo(agentId, claimOptions);
       await context.tracker.claim(ref, claim);
+      saveLocalClaim(context.repoRoot, ref, claim);
       appendRuntimeEvent(context.repoRoot, ref, 'claim', { agentId, claim });
       await printJson({ claimed: true, ref, claim });
       return;
@@ -162,8 +203,8 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
 
     case 'release': {
       const id = requireArg(rest[0], 'work item id');
-      const claimToken = requireFlag(parsed, 'claim-token');
       const ref = makeRef(context, id);
+      const claimToken = getStringFlag(parsed, 'claim-token') ?? requireLocalClaimToken(context.repoRoot, ref);
       await context.tracker.releaseClaim(ref, claimToken);
       appendRuntimeEvent(context.repoRoot, ref, 'claim-release', { claimToken });
       await printJson({ released: true, ref, claimToken });
@@ -356,6 +397,11 @@ function readJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, 'utf8')) as T;
 }
 
+function writeJsonFile(path: string, value: unknown): void {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+}
+
 function resolveRepoPath(repoRoot: string, path: string): string {
   return path.startsWith('/') ? path : resolve(repoRoot, path);
 }
@@ -479,6 +525,67 @@ function parsePositiveInteger(raw: string, flagName: string): number {
     throw new Error(`${flagName} must be a positive integer.`);
   }
   return value;
+}
+
+function agentIdentityPath(repoRoot: string): string {
+  return join(repoRoot, '.agent-stack', 'local', 'agent-identity.json');
+}
+
+function getAgentIdentity(repoRoot: string): AgentIdentity | undefined {
+  const path = agentIdentityPath(repoRoot);
+  return existsSync(path) ? readJson<AgentIdentity>(path) : undefined;
+}
+
+function ensureAgentIdentity(repoRoot: string, parsed: ParsedArgs): AgentIdentity {
+  const explicit = getStringFlag(parsed, 'agent');
+  const existing = getAgentIdentity(repoRoot);
+  if (existing && !explicit) {
+    return existing;
+  }
+
+  const provider = getStringFlag(parsed, 'provider') ?? process.env.AGENTSTACK_AGENT_PROVIDER ?? detectAgentProvider();
+  const identity: AgentIdentity = {
+    agentId: explicit ?? process.env.AGENTSTACK_AGENT_ID ?? `${provider}/${createLocalIdSuffix()}`,
+    provider,
+    createdAt: new Date().toISOString(),
+  };
+  writeJsonFile(agentIdentityPath(repoRoot), identity);
+  return identity;
+}
+
+function createLocalIdSuffix(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function detectAgentProvider(): string {
+  if (process.env.CODEX_HOME || process.env.OPENAI_API_KEY) {
+    return 'codex';
+  }
+  if (process.env.CLAUDECODE || process.env.ANTHROPIC_API_KEY) {
+    return 'claude';
+  }
+  return 'agent';
+}
+
+function localClaimPath(repoRoot: string, ref: WorkItemRef): string {
+  return join(repoRoot, '.agent-stack', 'runs', ref.id, 'claim.json');
+}
+
+function saveLocalClaim(repoRoot: string, ref: WorkItemRef, claim: ClaimInfo): void {
+  const record: LocalClaimRecord = {
+    workItem: ref,
+    claim,
+    savedAt: new Date().toISOString(),
+  };
+  writeJsonFile(localClaimPath(repoRoot, ref), record);
+}
+
+function requireLocalClaimToken(repoRoot: string, ref: WorkItemRef): string {
+  const path = localClaimPath(repoRoot, ref);
+  if (!existsSync(path)) {
+    throw new Error(`Missing --claim-token and no local claim token found at ${path}`);
+  }
+  return readJson<LocalClaimRecord>(path).claim.claimToken;
 }
 
 function formatProtocolComment(kind: string, body: string): string {

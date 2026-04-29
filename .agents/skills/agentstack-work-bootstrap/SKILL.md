@@ -1,7 +1,7 @@
 ---
 name: agentstack-work-bootstrap
 description: >
-  Use when an agent must prepare an isolated branch, worktree, or workspace for a claimed work item.
+  Use when an agent must prepare an isolated branch, worktree, or workspace before claiming and implementing a work item.
 compatibility: >
   AgentStack Protocol repository layout with .agent-stack as the canonical source of truth.
 metadata:
@@ -15,31 +15,38 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 ## CLI reference
 
-Use `agentstack help work-item claim --json` to inspect claim metadata fields that may need to be carried into branch or workspace naming.
+Use `agentstack help work-item graph --json`, `agentstack help agent identity --json`, and `agentstack help work-item claim --json` to inspect the command contracts involved in safe startup.
 
 ## When to use
 
-Use this skill after claim and before planning or implementation when an isolated branch, worktree, or workspace is needed.
+Use this skill after graph validation and before claim when an isolated branch, worktree, or workspace is needed. This is required when multiple agents may work concurrently.
 
 ## Commands
 
-1. Run `agentstack work-item get <id>` to confirm the active claim.
-2. Use repository-native git commands to create or switch to the branch/worktree.
-3. If claim metadata needs to include branch/workspace, provide it when claiming: `agentstack work-item claim <id> --agent <agent-id> --branch <name> --workspace <path>`.
+1. Run `agentstack work-item graph <id>` from the coordination checkout.
+2. Create a dedicated git worktree and branch for the work item.
+3. Change into the dedicated worktree.
+4. Run `agentstack agent identity init` or `agentstack agent identity show` in that worktree.
+5. Claim from inside that worktree with `agentstack work-item claim <id> --branch <name> --workspace <path>`.
 
 ## Decision rules
 
-- Bootstrap only work claimed by this agent.
 - Use deterministic branch/workspace names that include the work item id.
+- The identity used for claim must live in the worktree that will implement the item.
+- Claim only after entering the isolated worktree.
 - Do not modify source files before the plan is recorded.
 
 ## Stop or escalate
 
-- Stop if the item is unclaimed or claimed by another agent.
+- Stop if the item is already claimed by another agent.
 - Stop if branch/worktree setup would overwrite unrelated local changes.
+- Stop if the repository cannot create an isolated workspace and concurrent agents may run.
 
 ## Example
 
 ```sh
-agentstack work-item claim 123 --agent codex-01 --branch agentstack/123 --workspace ../worktrees/123
+git worktree add ../agentstack-worktrees/123 -b agentstack/123 origin/main
+cd ../agentstack-worktrees/123
+agentstack agent identity init
+agentstack work-item claim 123 --branch agentstack/123 --workspace ../agentstack-worktrees/123
 ```

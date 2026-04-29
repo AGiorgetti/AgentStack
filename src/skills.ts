@@ -16,4 +16,5 @@ export const protocolSkills: readonly SkillDescriptor[] = [
   { name: 'agentstack-tracker-sync', description: 'Keep tracker state aligned with execution progress.', path: '.agents/skills/agentstack-tracker-sync/SKILL.md' },
   { name: 'agentstack-submit-review', description: 'Submit completed agent work for human review.', path: '.agents/skills/agentstack-submit-review/SKILL.md' },
   { name: 'agentstack-block', description: 'Stop safely and publish blockers when progress is unsafe.', path: '.agents/skills/agentstack-block/SKILL.md' },
+  { name: 'git-worktree-ops', description: 'Operate git worktrees safely for concurrent agent execution.', path: '.agents/skills/git-worktree-ops/SKILL.md' },
 ];

@@ -11,7 +11,8 @@ Important locations:
 - `.agent-stack/language/backlog-language.yaml`
 - `.agent-stack/policy/AGENT-POLICY.json`
 - `.agents/skills/agentstack-*/SKILL.md`
+- `.agents/skills/git-worktree-ops/SKILL.md`
 
-Skills live only under `.agents/skills`, and every AgentStack skill starts with `agentstack-`.
+Skills live only under `.agents/skills`. AgentStack protocol skills start with `agentstack-`; `git-worktree-ops` is the supporting skill for isolated git worktree operations.
 
 The setup process must preserve existing repository instructions by merging an AgentStack-managed block into `AGENTS.md`, not by replacing the whole file.

@@ -42,17 +42,36 @@ agentstack help work-item submit-review --json
 
 AgentStack skills should reference `agentstack help ... --json` for current flags, output, examples, and policy effects instead of duplicating full command manuals.
 
+## Local Agent Identity
+
+The CLI can create local, uncommitted agent identity state under:
+
+```text
+.agent-stack/local/agent-identity.json
+```
+
+Use:
+
+```sh
+agentstack agent identity init
+agentstack agent identity show
+```
+
+`agentstack work-item claim` uses this identity when `--agent` is omitted and saves the claim token under `.agent-stack/runs/<id>/claim.json`. Release can use that saved token when `--claim-token` is omitted.
+
+For concurrent work, initialize identity inside the dedicated git worktree or isolated workspace that will own the claim, then claim from that workspace with branch/workspace metadata.
+
 ## Skills
 
 Skills do **not** live under `.agent-stack`.
 
-AgentStack skills live only under:
+AgentStack protocol skills live only under:
 
 ```text
 .agents/skills/agentstack-*/SKILL.md
 ```
 
-The `agentstack-` prefix reduces naming collisions with other skill packages. Because apparently even folders need namespaces now.
+The `agentstack-` prefix reduces naming collisions with other skill packages. Supporting skills may also be deployed when the protocol depends on them. `git-worktree-ops` is the supporting skill for git worktree isolation in concurrent agent workflows.
 
 ## Generic agent entrypoint
 

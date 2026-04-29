@@ -23,8 +23,6 @@ skills at .agents/skills
 - `bug`
 - `spike`
 
-`portfolio-item` is deliberately excluded. Strategic portfolio structures can be mapped outside this protocol if a team needs them. Let us not smuggle enterprise taxonomy into a delivery protocol just because some tool can display another level of nesting.
-
 ## Canonical states
 
 - `draft`
@@ -50,19 +48,53 @@ skills at .agents/skills
 1. Humans decide when a work item is ready for agent implementation.
 2. Agents may only claim work explicitly mapped to `executionMode = agent` and `readyForAgent = true`.
 3. Agents must check dependency relations before implementation.
-4. Agents must create an execution plan before coding.
-5. Agents must synchronize meaningful progress back to the tracker.
-6. Agents must stop and raise a blocker instead of guessing through ambiguity.
-7. Agents open a PR and submit completed work for review unless policy explicitly says otherwise.
-8. Humans decide merge and final closure by default.
+4. Agents must use an isolated workspace before claiming work when multiple agents may run concurrently.
+5. Agents must create or select the local identity in the same workspace that will own the claim.
+6. Agents must create an execution plan before coding.
+7. Agents must synchronize meaningful progress back to the tracker.
+8. Agents must stop and raise a blocker instead of guessing through ambiguity.
+9. Agents open a PR and submit completed work for review unless policy explicitly says otherwise.
+10. Humans decide merge and final closure by default.
 
 ## Runtime workflow
 
 ```text
-load language -> intake -> claim -> graph -> bootstrap -> plan -> implement -> sync -> submit-review
+load language -> intake -> graph -> bootstrap workspace -> identity -> claim -> plan -> implement -> sync -> submit-review
 ```
 
-The workflow is executed through skills under `.agents/skills/agentstack-*/SKILL.md`.
+The workflow is executed through protocol skills under `.agents/skills/agentstack-*/SKILL.md`, with `.agents/skills/git-worktree-ops/SKILL.md` used for git worktree isolation.
+
+## Concurrent agent workspaces
+
+Multiple agents may work in the same repository at the same time only when each claimed work item uses an isolated mutable workspace.
+
+Recommended layout:
+
+```text
+main checkout
+  used for setup, fetch, intake, and orchestration
+
+../agentstack-worktrees/
+  <work-item-id>-<agent-suffix>/
+    dedicated git worktree
+    dedicated branch
+    dedicated .agent-stack/local/agent-identity.json
+    dedicated .agent-stack/runs/<work-item-id>/claim.json
+```
+
+Agents must not share one mutable checkout for implementation work. Shared checkouts share a git index, working tree, local runtime files, dependency/build outputs, and branch state, so parallel agents can interfere with each other even when they claim different tracker items.
+
+The safe startup sequence for one item is:
+
+```text
+from coordination checkout:
+  doctor -> get -> graph -> create worktree
+
+from the dedicated worktree:
+  identity init/show -> claim with branch/workspace -> plan -> implement
+```
+
+The claim should be written from inside the dedicated workspace so claim metadata records the branch and workspace that will actually perform the implementation.
 
 ## Skill naming
 
@@ -73,6 +105,8 @@ All AgentStack Protocol skills must:
 - contain a `SKILL.md` file
 - have frontmatter `name` matching the directory name
 - start with the `agentstack-` prefix to avoid collisions with other skill packages
+
+Supporting skills may be deployed alongside AgentStack Protocol skills when they cover a required operational concern. `git-worktree-ops` is the supported git worktree operations skill used by the workspace bootstrap flow.
 
 ## Deployable repository footprint
 
@@ -91,6 +125,7 @@ AGENTS.md
 .agents/
   skills/
     agentstack-*/SKILL.md
+    git-worktree-ops/SKILL.md
 ```
 
 Optional vendor shims such as `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md` may be added, but `AGENTS.md` remains the generic entrypoint.
@@ -101,13 +136,38 @@ If local machine-readable runtime state is needed, store it under:
 
 ```text
 .agent-stack/runs/<work-item-id>/
+  claim.json
   protocol-state.json
   protocol-log.jsonl
   execution-plan.json
   submit-review-summary.md
 ```
 
-Do not use `.agent-stack/skills`; skills belong only in `.agents/skills`.
+Skills belong only in `.agents/skills`.
+
+## Local agent identity
+
+Claims use two related values:
+
+- `agentId`: identifies the autonomous agent instance that owns the work.
+- `claimToken`: proves ownership of one specific claim.
+
+The CLI may store local, uncommitted identity state under each workspace:
+
+```text
+.agent-stack/local/agent-identity.json
+```
+
+Agents may initialize or inspect it with:
+
+```sh
+agentstack agent identity init
+agentstack agent identity show
+```
+
+`agentstack work-item claim` uses this identity when `--agent` is omitted. A successful claim stores its token locally under `.agent-stack/runs/<work-item-id>/claim.json` so later commands, such as release or future resume behavior, can prove ownership without requiring the human to paste a token.
+
+Local identity and claim files are runtime state and must not be committed. `agentId` is useful for continuity across sessions in the same workspace, but token-sensitive operations must rely on `claimToken`. For concurrent work, each worktree should have its own local identity unless the same long-lived agent process intentionally owns multiple claims.
 
 ## Tracker profiles
 

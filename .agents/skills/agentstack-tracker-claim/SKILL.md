@@ -19,18 +19,22 @@ Use `agentstack help work-item get --json`, `agentstack help work-item graph --j
 
 ## When to use
 
-Use this skill immediately before planning or implementation when a specific work item must be claimed by this agent.
+Use this skill after graph validation and workspace bootstrap, immediately before planning or implementation.
 
 ## Commands
 
 1. Run `agentstack work-item get <id>`.
 2. Run `agentstack work-item graph <id>`.
-3. If eligible, run `agentstack work-item claim <id> --agent <agent-id>`.
+3. Confirm the agent is inside the isolated workspace that will implement the item.
+4. Run `agentstack agent identity show` or `agentstack agent identity init`.
+5. If eligible, run `agentstack work-item claim <id> --branch <name> --workspace <path>`.
 
 ## Decision rules
 
 - Claim only when `graph.canStart` is true.
 - Treat an active claim by another agent as exclusive ownership.
+- In concurrent runs, claim from the dedicated worktree, not from the shared coordination checkout.
+- Include branch and workspace metadata when available.
 - Use `--force` only for explicit human-approved exceptions or controlled smoke tests.
 - Preserve the returned `claim.claimToken`; release and future conflict handling depend on it.
 
@@ -44,5 +48,6 @@ Use this skill immediately before planning or implementation when a specific wor
 ```sh
 agentstack work-item get 123
 agentstack work-item graph 123
-agentstack work-item claim 123 --agent codex-01
+agentstack agent identity init
+agentstack work-item claim 123 --branch agentstack/123 --workspace ../agentstack-worktrees/123
 ```

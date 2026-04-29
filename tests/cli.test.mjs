@@ -35,9 +35,19 @@ test('renderHelpJson returns structured command metadata for work-item claim', (
   assert.deepEqual(help.commandPath, ['work-item', 'claim']);
   assert.equal(help.fullCommand, 'agentstack work-item claim');
   assert.equal(help.summary, 'Register an exclusive autonomous execution claim.');
-  assert.ok(help.flags.some((flag) => flag.name === '--agent' && flag.required === true));
+  assert.ok(help.flags.some((flag) => flag.name === '--agent' && flag.required !== true));
   assert.ok(help.policyEffects.some((entry) => entry.includes('requireAcceptanceCriteria')));
+  assert.ok(help.notes.some((entry) => entry.includes('agent-identity.json')));
   assert.equal(help.output?.fields?.some((field) => field.name === 'claim.claimToken'), true);
+});
+
+test('renderHelpJson returns structured command metadata for agent identity', () => {
+  const help = renderHelpJson(['agent', 'identity']);
+
+  assert.equal(help.fullCommand, 'agentstack agent identity');
+  assert.ok(help.usage.some((entry) => entry.includes('identity init')));
+  assert.ok(help.flags.some((flag) => flag.name === '--provider'));
+  assert.equal(help.output?.fields?.some((field) => field.name === 'identity.agentId'), true);
 });
 
 test('renderHelpText returns structured human help for work-item submit-review', () => {

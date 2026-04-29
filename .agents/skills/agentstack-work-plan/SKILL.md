@@ -19,7 +19,7 @@ Use `agentstack help work-item plan --json` for the current plan command syntax 
 
 ## When to use
 
-Use this skill after a valid claim and graph check, before making code changes.
+Use this skill after graph check, workspace bootstrap, identity initialization, and a valid claim, before making code changes.
 
 ## Commands
 

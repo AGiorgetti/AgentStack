@@ -419,3 +419,7 @@ FodyWeavers.xsd
 
 # TypeScript Compitation Output
 dist/
+
+# AgentStack local runtime state
+.agent-stack/local/
+.agent-stack/runs/

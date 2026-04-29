@@ -15,6 +15,37 @@ Possible future policy fields:
 
 These fields should be added to `AGENT-POLICY.json` only when the CLI enforces them or exposes them in command output.
 
+## Worktree Bootstrap
+
+Concurrent agents need isolated mutable workspaces. Git worktrees are the best default for ordinary git repositories because they isolate the working tree, index, branch, local AgentStack identity, claim token, build outputs, and editor state while sharing the same object database.
+
+The active protocol should require the sequence:
+
+```text
+graph -> bootstrap workspace -> identity -> claim -> plan -> implement
+```
+
+A future CLI command should automate this sequence instead of expecting every agent to hand-roll git commands:
+
+```sh
+agentstack work-item bootstrap <id> [--base origin/main] [--worktrees-dir ../agentstack-worktrees] [--branch <name>]
+```
+
+Possible behavior:
+
+- verify `agentstack doctor`
+- run `work-item graph` and fail if `canStart` is false
+- compute a deterministic branch and worktree path
+- run `git fetch`
+- create a dedicated `git worktree`
+- initialize local identity inside the worktree
+- optionally claim from inside the worktree with `--branch` and `--workspace`
+- print the workspace path and next command
+
+This probably deserves a dedicated skill, such as `agentstack-worktree-bootstrap`, once the CLI command exists. Keeping it separate from generic `agentstack-work-bootstrap` would let repositories use non-git isolation later without overloading the worktree-specific rules.
+
+Until this exists, skills should describe git worktrees as the recommended manual isolation mechanism for concurrent agents.
+
 ## Partial Handoff
 
 `submit-review` now means completed agent work has been submitted for human review, usually through a pull request. A future `handoff` command should be added with different semantics for partial or interrupted work.
@@ -55,7 +86,7 @@ blocked -> ready -> claim -> plan -> implement
 The agent should release its claim, and the resolved item can be claimed by any eligible agent:
 
 ```sh
-agentstack work-item release <id> --claim-token <token>
+agentstack work-item release <id>
 agentstack work-item state <id> --state ready
 ```
 

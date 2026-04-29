@@ -59,8 +59,7 @@ export interface HelpJson {
 const agentIdFlag: HelpFlag = {
   name: '--agent',
   valueName: '<agent-id>',
-  required: true,
-  description: 'Stable autonomous agent identifier used in claims and tracker updates.',
+  description: 'Stable autonomous agent identifier used in claims and tracker updates. Defaults to local agent identity.',
 };
 
 const repoFlag: HelpFlag = {
@@ -179,6 +178,39 @@ const topLevelHelp: HelpNode = {
       ],
     },
     {
+      name: 'agent',
+      summary: 'Local agent identity operations.',
+      description:
+        'Commands for creating and inspecting the repository-local agent identity used as the default claim agent id. Identity files are local runtime state and should not be committed.',
+      usage: ['agentstack agent identity <init|show> [--agent <agent-id>] [--provider <name>] [--repo <repo>]'],
+      subcommands: [
+        {
+          name: 'identity',
+          summary: 'Create or inspect local agent identity.',
+          description:
+            'Initializes or displays `.agent-stack/local/agent-identity.json`. `claim` creates this identity automatically when `--agent` is omitted.',
+          usage: [
+            'agentstack agent identity init [--agent <agent-id>] [--provider <name>] [--repo <repo>]',
+            'agentstack agent identity show [--repo <repo>]',
+          ],
+          flags: [
+            { name: '--agent', valueName: '<agent-id>', description: 'Explicit agent id to persist locally.' },
+            { name: '--provider', valueName: '<name>', description: 'Agent provider name used when generating an id. Defaults to environment detection or `agent`.' },
+            repoFlag,
+          ],
+          output: {
+            description: 'Local identity result.',
+            fields: [
+              { name: 'identity.agentId', description: 'Stable local agent id used by default for claims.' },
+              { name: 'identity.provider', description: 'Provider label such as `codex`, `claude`, or `agent`.' },
+              { name: 'path', description: 'Local identity file path.' },
+            ],
+          },
+          subcommands: [],
+        },
+      ],
+    },
+    {
       name: 'work-item',
       summary: 'Canonical tracker-backed work item operations.',
       description: 'Commands that read, claim, update, and submit backlog items through the active tracker adapter.',
@@ -244,7 +276,7 @@ const topLevelHelp: HelpNode = {
           summary: 'Register an exclusive autonomous execution claim.',
           description:
             'Checks eligibility, writes protocol state `claimed`, persists claim metadata through the active tracker, and records a local claim event.',
-          usage: ['agentstack work-item claim <id> --agent <agent-id> [--branch <name>] [--workspace <path>] [--force] [--repo <repo>]'],
+          usage: ['agentstack work-item claim <id> [--agent <agent-id>] [--branch <name>] [--workspace <path>] [--force] [--repo <repo>]'],
           arguments: [{ name: '<id>', required: true, description: 'Tracker work item id ending in a numeric identifier.' }],
           flags: [
             agentIdFlag,
@@ -254,6 +286,10 @@ const topLevelHelp: HelpNode = {
             repoFlag,
           ],
           policyEffects: ['`requireAcceptanceCriteria` can block the claim unless `--force` is used.'],
+          notes: [
+            'When `--agent` is omitted, the CLI uses `.agent-stack/local/agent-identity.json` or creates it automatically.',
+            'The generated claim token is saved locally under `.agent-stack/runs/<id>/claim.json` for later release/resume operations.',
+          ],
           output: {
             description: 'Claim result.',
             fields: [
@@ -269,12 +305,13 @@ const topLevelHelp: HelpNode = {
           summary: 'Release an active claim marker from a work item.',
           description:
             'Removes the active claim marker through the tracker adapter and records a local claim-release event.',
-          usage: ['agentstack work-item release <id> --claim-token <token> [--repo <repo>]'],
+          usage: ['agentstack work-item release <id> [--claim-token <token>] [--repo <repo>]'],
           arguments: [{ name: '<id>', required: true, description: 'Tracker work item id ending in a numeric identifier.' }],
           flags: [
-            { name: '--claim-token', valueName: '<token>', required: true, description: 'Claim token associated with the claim being released.' },
+            { name: '--claim-token', valueName: '<token>', description: 'Claim token associated with the claim being released. Defaults to the local claim file when present.' },
             repoFlag,
           ],
+          notes: ['Local claim tokens are read from `.agent-stack/runs/<id>/claim.json` when `--claim-token` is omitted.'],
           output: {
             description: 'Release result.',
             fields: [

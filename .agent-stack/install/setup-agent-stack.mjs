@@ -354,7 +354,7 @@ function activeTrackerFile() {
 
 mkdirSync(targetStack, { recursive: true });
 
-for (const rel of ['README.md', 'protocol', 'language', 'policy']) {
+for (const rel of ['README.md', 'PROMPTS.md', 'protocol', 'language', 'policy']) {
   copyFileOrDir(join(sourceStack, rel), join(targetStack, rel));
 }
 
@@ -382,23 +382,24 @@ Read in this order:
 5. \`.agent-stack/active-tracker.json\`
 6. the active tracker mapping/config in \`.agent-stack/trackers/\`
 7. \`.agents/skills/agentstack-*/SKILL.md\`
+8. \`.agents/skills/git-worktree-ops/SKILL.md\`
 
 Active tracker: \`${args.tracker}\`.
 
 Use the \`agentstack\` CLI for tracker-backed work. Do not call tracker-native CLIs directly for normal protocol operations unless the AgentStack CLI cannot perform the required operation.
 
-Do not process inactive tracker files. Skills live only under \`.agents/skills\` and every AgentStack skill starts with \`agentstack-\`.`);
+Do not process inactive tracker files. Skills live only under \`.agents/skills\`. AgentStack protocol skills start with \`agentstack-\`; \`git-worktree-ops\` is the supporting skill for isolated git worktree operations.`);
 
 const uses = new Set(args.agents);
 if (uses.has('claude')) {
   write(join(targetRoot, 'CLAUDE.md'), `# Claude Instructions\n\n@AGENTS.md\n@.agent-stack/README.md\n@.agent-stack/protocol/AGENT-PROTOCOL.md\n@.agent-stack/language/backlog-language.yaml\n@.agent-stack/policy/AGENT-POLICY.json\n@.agents/skills/agentstack-orchestrator/SKILL.md\n\nActive tracker: ${args.tracker}. Read only its mapping/config in .agent-stack/trackers/.\n`);
 }
 if (uses.has('copilot')) {
-  write(join(targetRoot, '.github', 'copilot-instructions.md'), `# Copilot Repository Instructions\n\nThis repository uses AgentStack Protocol. Read AGENTS.md before autonomous backlog work.\n\nUse the agentstack CLI for tracker-backed work. Use only AgentStack skills under .agents/skills/agentstack-*/SKILL.md.\n\nActive tracker: ${args.tracker}. Do not load inactive tracker mappings.\n`);
-  write(join(targetRoot, '.github', 'instructions', 'agent-workflow.instructions.md'), `---\napplyTo: "**"\n---\n# AgentStack Protocol Workflow\n\nUse AGENTS.md, .agent-stack, and .agents/skills/agentstack-* as the source of truth. Active tracker: ${args.tracker}.\n`);
+  write(join(targetRoot, '.github', 'copilot-instructions.md'), `# Copilot Repository Instructions\n\nThis repository uses AgentStack Protocol. Read AGENTS.md before autonomous backlog work.\n\nUse the agentstack CLI for tracker-backed work. Use AgentStack protocol skills under .agents/skills/agentstack-*/SKILL.md and git-worktree-ops for isolated worktree operations.\n\nActive tracker: ${args.tracker}. Do not load inactive tracker mappings.\n`);
+  write(join(targetRoot, '.github', 'instructions', 'agent-workflow.instructions.md'), `---\napplyTo: "**"\n---\n# AgentStack Protocol Workflow\n\nUse AGENTS.md, .agent-stack, .agents/skills/agentstack-*, and .agents/skills/git-worktree-ops as the source of truth. Active tracker: ${args.tracker}.\n`);
 }
 if (uses.has('gemini')) {
-  write(join(targetRoot, 'GEMINI.md'), `# Gemini Instructions\n\nRead AGENTS.md first. Use .agent-stack for protocol assets and .agents/skills/agentstack-* for skills.\n\nActive tracker: ${args.tracker}.\n`);
+  write(join(targetRoot, 'GEMINI.md'), `# Gemini Instructions\n\nRead AGENTS.md first. Use .agent-stack for protocol assets, .agents/skills/agentstack-* for protocol skills, and .agents/skills/git-worktree-ops for isolated worktree operations.\n\nActive tracker: ${args.tracker}.\n`);
 }
 
 provisionTracker(trackerConfig);
