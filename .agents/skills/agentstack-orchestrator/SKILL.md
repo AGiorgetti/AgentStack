@@ -2,7 +2,6 @@
 name: agentstack-orchestrator
 description: >
   Use when an autonomous agent needs to decide which AgentStack Protocol skill to invoke next while executing backlog-driven software work.
-license: MIT
 compatibility: >
   AgentStack Protocol repository layout with .agent-stack as the canonical source of truth.
 metadata:
@@ -18,17 +17,33 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 Use `agentstack help --json` for the full command catalog and `agentstack help <command> --json` for the current command contract before invoking workflow commands.
 
-## Procedure
+## When to use
 
-1. Load `.agent-stack/README.md`.
-2. Load `.agent-stack/protocol/AGENT-PROTOCOL.md`.
-3. Load `.agent-stack/policy/AGENT-POLICY.json`.
-4. Use `agentstack-backlog-language` to load the canonical language and active tracker mapping.
-5. Invoke the workflow skills in order: `agentstack-tracker-intake`, `agentstack-tracker-claim`, `agentstack-tracker-graph`, `agentstack-work-bootstrap`, `agentstack-work-plan`, `agentstack-work-implement`, `agentstack-tracker-sync`, `agentstack-submit-review`.
-6. Invoke `agentstack-blocker-handling` whenever safe progress is impossible.
+Use this skill to choose the next AgentStack workflow skill while executing tracker-backed work.
 
-## Rules
+## Commands
+
+1. Run `agentstack doctor` before relying on protocol assets.
+2. Run `agentstack help --json` when command contracts are needed.
+3. Delegate to the specific workflow skill for intake, graph, claim, bootstrap, plan, implement, sync, block, or submit-review.
+
+## Decision rules
+
+- Start with `agentstack-backlog-language` when tracker meaning is unclear.
+- Use the normal path: intake, graph, claim, bootstrap, plan, implement, sync, submit-review.
+- Invoke `agentstack-block` whenever safe progress is impossible.
+- Do not parse tracker-native labels or fields when an `agentstack` command can provide normalized output.
+
+## Stop or escalate
 
 - Never skip claim before implementation.
 - Never implement blocked work.
 - Never close work unless policy explicitly allows it.
+- Stop when `agentstack doctor` fails.
+
+## Example
+
+```sh
+agentstack doctor
+agentstack help work-item claim --json
+```

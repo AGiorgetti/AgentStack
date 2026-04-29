@@ -2,7 +2,6 @@
 name: agentstack-backlog-language
 description: >
   Use when an agent must interpret, normalize, create, link, or update backlog items through the repository-specific ubiquitous delivery language and active tracker mapping dictionary.
-license: MIT
 compatibility: >
   AgentStack Protocol repository layout with .agent-stack as the canonical source of truth.
 metadata:
@@ -22,17 +21,28 @@ Use `agentstack help language validate --json` and `agentstack help mapping vali
 
 Use this skill before tracker intake, graph analysis, planning, synchronization, or tracker updates.
 
-## Procedure
+## Commands
 
-1. Read `.agent-stack/language/backlog-language.yaml`.
-2. Read only the active tracker mapping from `.agent-stack/trackers/`.
-3. Translate tracker-native fields, labels, tags, states, and relations into canonical protocol concepts.
-4. Verify that type, readiness, execution mode, protocol state, priority, and relations are explicitly mapped.
-5. If a mapping is missing, stop and use the agentstack-blocker-handling skill.
+1. Run `agentstack language validate`.
+2. Run `agentstack mapping validate`.
+3. Read `.agent-stack/language/backlog-language.yaml` and the active tracker mapping only when interpretation details are needed.
 
-## Hard rules
+## Decision rules
+
+- Translate tracker-native fields, labels, tags, states, and relations only through explicit mappings.
+- Verify that type, readiness, execution mode, protocol state, priority, and relations are mapped before relying on them.
+- Load only the active tracker mapping.
+
+## Stop or escalate
 
 - Do not infer readiness from prose.
 - Do not assume a tracker label, tag, or field has protocol meaning unless the mapping says so.
-- Do not load mappings for inactive trackers.
 - Do not invent new canonical work item types.
+- Stop when language or mapping validation fails.
+
+## Example
+
+```sh
+agentstack language validate
+agentstack mapping validate
+```

@@ -2,7 +2,6 @@
 name: agentstack-tracker-claim
 description: >
   Use when an agent must exclusively claim an eligible work item before planning or implementation.
-license: MIT
 compatibility: >
   AgentStack Protocol repository layout with .agent-stack as the canonical source of truth.
 metadata:
@@ -16,17 +15,34 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 ## CLI reference
 
-Use `agentstack help work-item graph --json` before claim evaluation and `agentstack help work-item claim --json` for the current claim contract and output.
+Use `agentstack help work-item get --json`, `agentstack help work-item graph --json`, and `agentstack help work-item claim --json` for current flags, output fields, policy effects, and failure shapes.
 
-## Procedure
+## When to use
 
-1. Re-read the target work item.
-2. Verify it is still eligible and unclaimed.
-3. Generate a claim token.
-4. Update protocol state to `claimed`.
-5. Persist the claim in the tracker and local protocol log.
+Use this skill immediately before planning or implementation when a specific work item must be claimed by this agent.
 
-## Rules
+## Commands
 
-- One active claim per work item.
-- If claim creation is ambiguous or races, stop and raise a blocker.
+1. Run `agentstack work-item get <id>`.
+2. Run `agentstack work-item graph <id>`.
+3. If eligible, run `agentstack work-item claim <id> --agent <agent-id>`.
+
+## Decision rules
+
+- Claim only when `graph.canStart` is true.
+- Treat an active claim by another agent as exclusive ownership.
+- Use `--force` only for explicit human-approved exceptions or controlled smoke tests.
+- Preserve the returned `claim.claimToken`; release and future conflict handling depend on it.
+
+## Stop or escalate
+
+- Stop on `claimed: false`, claim conflict, active claim, blocked dependency, unsupported relation data, or policy failure.
+- Escalate when eligibility is ambiguous or the tracker response cannot prove the claim belongs to this agent.
+
+## Example
+
+```sh
+agentstack work-item get 123
+agentstack work-item graph 123
+agentstack work-item claim 123 --agent codex-01
+```

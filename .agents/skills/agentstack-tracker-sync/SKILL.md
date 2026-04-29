@@ -2,7 +2,6 @@
 name: agentstack-tracker-sync
 description: >
   Use when an agent must keep tracker protocol state, progress comments, PR links, and local execution state aligned.
-license: MIT
 compatibility: >
   AgentStack Protocol repository layout with .agent-stack as the canonical source of truth.
 metadata:
@@ -18,10 +17,31 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 Use `agentstack help work-item progress --json`, `agentstack help work-item state --json`, `agentstack help work-item block --json`, and `agentstack help work-item submit-review --json` for the current sync command contracts.
 
-## Procedure
+## When to use
 
-1. Write concise progress updates after meaningful milestones.
-2. Update protocol state only through valid transitions.
-3. Attach PR links when available.
-4. Record blockers immediately.
-5. Keep local protocol log and tracker state consistent.
+Use this skill when implementation progress, protocol state, blockers, or PR links need to be reflected in the tracker.
+
+## Commands
+
+1. Run `agentstack work-item progress <id> --message <text>` after meaningful milestones.
+2. Run `agentstack work-item state <id> --state <state>` only for intentional protocol transitions.
+3. Run `agentstack work-item block <id> --reason <text>` when safe progress stops.
+4. Run `agentstack work-item submit-review <id> --pr <url> --summary <text>` when work is ready for human review.
+
+## Decision rules
+
+- Keep updates concise and factual.
+- Sync after meaningful state changes, not after every small edit.
+- Do not use tracker-native comments for protocol updates when an `agentstack` command exists.
+- Prefer `block` over continuing through ambiguity.
+
+## Stop or escalate
+
+- Stop if the tracker update fails or returns a state inconsistent with local work.
+- Escalate when a requested state transition would misrepresent the actual work status.
+
+## Example
+
+```sh
+agentstack work-item progress 123 --message "Parser implemented; running adapter tests."
+```

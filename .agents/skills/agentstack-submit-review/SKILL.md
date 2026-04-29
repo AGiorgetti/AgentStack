@@ -2,7 +2,6 @@
 name: agentstack-submit-review
 description: >
   Use when an agent has completed implementation and must submit the work for human review.
-license: MIT
 compatibility: >
   AgentStack Protocol repository layout with .agent-stack as the canonical source of truth.
 metadata:
@@ -18,15 +17,31 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 Use `agentstack help work-item submit-review --json` for the current review submission command syntax, output shape, and policy effects.
 
-## Procedure
+## When to use
 
-1. Verify validation results.
-2. Open or update the pull request.
-3. Link the PR to the work item.
-4. Summarize changes, tests, risks, and known limitations.
-5. Set protocol state to `pr-open` or `in-review`.
+Use this skill when implementation is complete, validation has run, and the work is ready for human review through a PR.
 
-## Rules
+## Commands
 
-- Do not self-approve.
-- Do not close the work item unless policy explicitly allows it.
+1. Verify the working tree and validation results.
+2. Open or update the PR with the repository's normal GitHub/Azure workflow.
+3. Run `agentstack work-item submit-review <id> --pr <url> --summary <text>`.
+
+## Decision rules
+
+- The summary must include changes, validation, risks, and known limitations.
+- `submit-review` means the agent's scoped work is complete and review-ready.
+- Do not use this skill for partial work transfer; true partial handoff is future protocol behavior.
+- Do not self-approve or merge unless repository policy explicitly allows it.
+
+## Stop or escalate
+
+- Stop if validation has not run or failed without explanation.
+- Stop if no PR URL exists.
+- Escalate if policy requires review and a human reviewer is not identifiable.
+
+## Example
+
+```sh
+agentstack work-item submit-review 123 --pr https://github.com/OWNER/REPO/pull/456 --summary "Implemented claim checks; npm test passes."
+```

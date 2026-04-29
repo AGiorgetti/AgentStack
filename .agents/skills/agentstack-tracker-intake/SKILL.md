@@ -2,7 +2,6 @@
 name: agentstack-tracker-intake
 description: >
   Use when an agent must find or select a tracker work item that is eligible for autonomous execution under AgentStack Protocol.
-license: MIT
 compatibility: >
   AgentStack Protocol repository layout with .agent-stack as the canonical source of truth.
 metadata:
@@ -18,15 +17,31 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 Use `agentstack help work-item intake --json` for intake syntax and output, and `agentstack help work-item get --json` when a candidate item needs to be normalized in detail.
 
-## Procedure
+## When to use
 
-1. Use `agentstack-backlog-language` to identify the active tracker and mapping.
-2. Query candidate work items using the active tracker adapter or CLI.
-3. Keep only items with `executionMode = agent` and `readyForAgent = true`.
-4. Exclude items with active claims or unresolved blockers.
-5. Return the best candidate with an eligibility rationale.
+Use this skill when the agent needs to discover eligible backlog work or choose among candidate work items.
 
-## Stop conditions
+## Commands
+
+1. Run `agentstack work-item intake --limit <n>`.
+2. For a candidate, run `agentstack work-item get <id>`.
+3. Before claiming, hand off to `agentstack-tracker-graph` and `agentstack-tracker-claim`.
+
+## Decision rules
+
+- Prefer items with `executionMode = agent`, `readyForAgent = true`, and a claimable protocol state.
+- Do not infer readiness from prose; rely on the CLI-normalized fields.
+- Return a single best candidate only when the rationale is explicit.
+
+## Stop or escalate
 
 - No eligible item exists.
 - Required mapping or tracker data is missing.
+- Candidate data conflicts with the active tracker mapping.
+
+## Example
+
+```sh
+agentstack work-item intake --limit 10
+agentstack work-item get 123
+```

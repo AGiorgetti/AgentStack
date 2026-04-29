@@ -36,6 +36,57 @@ Unlike `submit-review`, a true partial handoff should not imply that implementat
 
 The command may need a dedicated protocol state such as `paused`, `handoff`, or `needs-continuation`, but that state should not be added until the CLI and tracker mappings enforce the behavior consistently.
 
+## Resume Blocked Work
+
+The active protocol can mark work as `blocked`, and the current transition table allows `blocked -> ready`. It does not yet define a dedicated way for the same agent to resume a blocked operation while keeping ownership.
+
+The future protocol should distinguish two cases:
+
+### Blocked and abandoned
+
+Use this when the current agent cannot continue and should hand the item back to the backlog.
+
+Target behavior:
+
+```text
+blocked -> ready -> claim -> plan -> implement
+```
+
+The agent should release its claim, and the resolved item can be claimed by any eligible agent:
+
+```sh
+agentstack work-item release <id> --claim-token <token>
+agentstack work-item state <id> --state ready
+```
+
+### Blocked but still owned
+
+Use this when the work is paused for a human decision, dependency resolution, or temporary tool failure, but the same agent should continue after the blocker is resolved.
+
+Target behavior:
+
+```text
+blocked -> implementing
+```
+
+This transition should require the same active claim token and should record why the work is safe to resume.
+
+Possible future command:
+
+```sh
+agentstack work-item resume <id> --claim-token <token> --message <text>
+```
+
+Expected behavior:
+
+- verify the active claim token belongs to the resuming agent
+- verify the blocker has been resolved or explicitly overridden by a human
+- move protocol state from `blocked` to `implementing`
+- write a resume/progress event to the tracker and local protocol log
+- fail non-zero if the claim token does not match, the item is not blocked, or dependencies are still open
+
+Until this exists, agents should prefer the safer abandoned flow: block, release the claim when they cannot continue promptly, return the item to `ready` after resolution, and claim it again before implementation resumes.
+
 ## Claim Race Prevention
 
 The current claim flow can still have a race window:
