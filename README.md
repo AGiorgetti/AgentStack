@@ -98,7 +98,7 @@ Current policy fields:
 | Field | Default | CLI effect |
 | --- | --- | --- |
 | `requireAcceptanceCriteria` | `true` | Used by `work-item graph` and `work-item claim` when calculating whether a work item can start. If true, a work item without parsed acceptance criteria is reported with `missing-acceptance-criteria`; `work-item claim` refuses the claim unless `--force` is used. |
-| `requireHumanReviewBeforeMerge` | `true` | Used by `work-item handoff`. The command always sets protocol state `pr-open`, and its JSON output includes `reviewRequired` with this policy value so agents and humans know whether merge must remain human-controlled. |
+| `requireHumanReviewBeforeMerge` | `true` | Used by `work-item submit-review`. The command always sets protocol state `pr-open`, and its JSON output includes `reviewRequired` with this policy value so agents and humans know whether merge must remain human-controlled. |
 
 Policy does not replace tracker state. A work item still needs the active tracker mapping to resolve `executionMode`, `readyForAgent`, `protocolState`, claims, and dependency relations. Policy is applied after those tracker values are normalized into AgentStack's canonical work item model.
 
@@ -131,7 +131,7 @@ agentstack work-item get 123
 agentstack work-item graph 123
 agentstack work-item claim 123 --agent codex-01
 agentstack work-item progress 123 --message "Implementation started."
-agentstack work-item handoff 123 --pr https://github.com/OWNER/REPO/pull/456
+agentstack work-item submit-review 123 --pr https://github.com/OWNER/REPO/pull/456
 ```
 
 All non-setup command output is JSON.
@@ -274,15 +274,15 @@ agentstack work-item plan <id> --file <path> [--repo <repo>]
 
 Use this after claim and before code changes. It records the plan as a protocol comment, sets state `implementing`, and appends a local execution-plan event.
 
-### `agentstack work-item handoff`
+### `agentstack work-item submit-review`
 
-Records completion context and moves the item to pull-request review.
+Submits completed agent work for pull-request review.
 
 ```sh
-agentstack work-item handoff <id> --pr <url> [--summary <text>|--summary-file <path>] [--repo <repo>]
+agentstack work-item submit-review <id> --pr <url> [--summary <text>|--summary-file <path>] [--repo <repo>]
 ```
 
-Use this after opening a pull request or otherwise producing reviewable work. It links the PR URL in a comment, writes a completion report, sets protocol state `pr-open`, and reports whether human review is required by policy.
+Use this after opening a pull request or otherwise producing reviewable work. It links the PR URL in a comment, writes a review submission report, sets protocol state `pr-open`, and reports whether human review is required by policy.
 
 ### `agentstack work-item create-child`
 
@@ -395,7 +395,7 @@ gh issue create \
   --body "## Acceptance Criteria
 - Smoke claim works
 - Smoke progress works
-- Smoke handoff works" \
+- Smoke submit-review works" \
   --label exec:agent \
   --label ready:agent \
   --label state:ready \
@@ -406,7 +406,7 @@ agentstack work-item graph 1 --repo .
 agentstack work-item claim 1 --agent codex-smoke --repo . --force
 agentstack work-item progress 1 --message "Smoke claim succeeded." --repo .
 agentstack work-item plan 1 --message "Smoke-test the AgentStack protocol command flow." --repo .
-agentstack work-item handoff 1 --pr https://github.com/OWNER/agentstack-smoke/pull/1 --summary "Smoke flow completed through handoff." --repo .
+agentstack work-item submit-review 1 --pr https://github.com/OWNER/agentstack-smoke/pull/1 --summary "Smoke flow completed through submit-review." --repo .
 ```
 
 The `claim` command currently uses `--force` in this smoke test because acceptance criteria parsing is not implemented yet. Until that parser exists, the default policy's `requireAcceptanceCriteria` gate cannot be satisfied automatically from the issue body.
@@ -449,7 +449,7 @@ az boards work-item create \
   --project PROJECT \
   --type Task \
   --title "AgentStack smoke test" \
-  --description "Acceptance Criteria: Smoke claim works; Smoke progress works; Smoke handoff works" \
+  --description "Acceptance Criteria: Smoke claim works; Smoke progress works; Smoke submit-review works" \
   --fields "System.Tags=exec:agent; ready:agent; state:ready; type:task"
 ```
 
@@ -461,7 +461,7 @@ agentstack work-item graph <id> --repo .
 agentstack work-item claim <id> --agent codex-smoke --repo . --force
 agentstack work-item progress <id> --message "Smoke claim succeeded." --repo .
 agentstack work-item plan <id> --message "Smoke-test the AgentStack protocol command flow." --repo .
-agentstack work-item handoff <id> --pr https://dev.azure.com/ORG/PROJECT/_git/REPO/pullrequest/1 --summary "Smoke flow completed through handoff." --repo .
+agentstack work-item submit-review <id> --pr https://dev.azure.com/ORG/PROJECT/_git/REPO/pullrequest/1 --summary "Smoke flow completed through submit-review." --repo .
 ```
 
 The `claim` command uses `--force` here for the same reason as the GitHub smoke test: acceptance criteria parsing is not implemented yet, so the default policy gate cannot be satisfied automatically from the work item description.

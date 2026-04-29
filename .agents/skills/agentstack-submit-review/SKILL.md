@@ -1,7 +1,7 @@
 ---
-name: agentstack-review-handoff
+name: agentstack-submit-review
 description: >
-  Use when an agent has completed implementation and must open a pull request or hand work back to a human reviewer.
+  Use when an agent has completed implementation and must submit the work for human review.
 license: MIT
 compatibility: >
   AgentStack Protocol repository layout with .agent-stack as the canonical source of truth.
@@ -12,7 +12,7 @@ metadata:
 allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 ---
 
-# Review Handoff
+# Submit Review
 
 ## Procedure
 
@@ -26,4 +26,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 - Do not self-approve.
 - Do not close the work item unless policy explicitly allows it.
-

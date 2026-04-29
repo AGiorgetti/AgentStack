@@ -26,10 +26,10 @@ language:
       A condition that prevents safe progress and requires dependency
       resolution, human decision, or external input.
 
-  handoff:
+  submit_review:
     description: >
-      Transfer of control from the agent back to a human reviewer, usually
-      through a pull request and a tracker update.
+      Submission of completed agent work for human review, usually through
+      a pull request and a tracker update.
 
 canonical_types:
   epic:

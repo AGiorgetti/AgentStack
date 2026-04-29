@@ -16,7 +16,7 @@ export type CanonicalConcept =
   | 'protocol-state'
   | 'claim'
   | 'blocker'
-  | 'handoff'
+  | 'submit-review'
   | 'review';
 
 export const canonicalWorkItemTypes = [

@@ -20,7 +20,7 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 2. Load `.agent-stack/protocol/AGENT-PROTOCOL.md`.
 3. Load `.agent-stack/policy/AGENT-POLICY.json`.
 4. Use `agentstack-backlog-language` to load the canonical language and active tracker mapping.
-5. Invoke the workflow skills in order: `agentstack-tracker-intake`, `agentstack-tracker-claim`, `agentstack-tracker-graph`, `agentstack-work-bootstrap`, `agentstack-work-plan`, `agentstack-work-implement`, `agentstack-tracker-sync`, `agentstack-review-handoff`.
+5. Invoke the workflow skills in order: `agentstack-tracker-intake`, `agentstack-tracker-claim`, `agentstack-tracker-graph`, `agentstack-work-bootstrap`, `agentstack-work-plan`, `agentstack-work-implement`, `agentstack-tracker-sync`, `agentstack-submit-review`.
 6. Invoke `agentstack-blocker-handling` whenever safe progress is impossible.
 
 ## Rules
@@ -28,4 +28,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 - Never skip claim before implementation.
 - Never implement blocked work.
 - Never close work unless policy explicitly allows it.
-

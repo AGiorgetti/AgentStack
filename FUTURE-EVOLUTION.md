@@ -15,6 +15,27 @@ Possible future policy fields:
 
 These fields should be added to `AGENT-POLICY.json` only when the CLI enforces them or exposes them in command output.
 
+## Partial Handoff
+
+`submit-review` now means completed agent work has been submitted for human review, usually through a pull request. A future `handoff` command should be added with different semantics for partial or interrupted work.
+
+Possible future command:
+
+```sh
+agentstack work-item handoff <id> --summary <text> [--branch <name>] [--workspace <path>] [--remaining <text>]
+```
+
+Unlike `submit-review`, a true partial handoff should not imply that implementation is complete or that a PR is ready. It should capture enough context for another agent or human to continue safely:
+
+- completed work
+- remaining work
+- current branch and workspace
+- validation status
+- known risks and blockers
+- whether the active claim should be released, transferred, or kept blocked
+
+The command may need a dedicated protocol state such as `paused`, `handoff`, or `needs-continuation`, but that state should not be added until the CLI and tracker mappings enforce the behavior consistently.
+
 ## Claim Race Prevention
 
 The current claim flow can still have a race window:

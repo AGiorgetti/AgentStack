@@ -203,7 +203,7 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
       return;
     }
 
-    case 'handoff': {
+    case 'submit-review': {
       const id = requireArg(rest[0], 'work item id');
       const prUrl = requireFlag(parsed, 'pr');
       const summary = getStringFlag(parsed, 'summary-file')
@@ -211,10 +211,10 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
         : getStringFlag(parsed, 'summary') ?? `Pull request ready for human review: ${prUrl}`;
       const ref = makeRef(context, id);
       await context.tracker.attachPullRequest(ref, prUrl);
-      await context.tracker.addComment(ref, formatProtocolComment('completion-report', summary));
+      await context.tracker.addComment(ref, formatProtocolComment('submit-review', summary));
       await context.tracker.setProtocolState(ref, 'pr-open');
-      appendRuntimeEvent(context.repoRoot, ref, 'completion-report', { prUrl, summary });
-      await printJson({ handoff: true, ref, state: 'pr-open', pr: prUrl, reviewRequired: context.policy.requireHumanReviewBeforeMerge });
+      appendRuntimeEvent(context.repoRoot, ref, 'submit-review', { prUrl, summary });
+      await printJson({ submitted: true, ref, state: 'pr-open', pr: prUrl, reviewRequired: context.policy.requireHumanReviewBeforeMerge });
       return;
     }
 
@@ -545,7 +545,7 @@ Work item commands:
   agentstack work-item progress <id> --message <text> [--repo <repo>]
   agentstack work-item block <id> --reason <text> [--repo <repo>]
   agentstack work-item plan <id> (--message <text>|--file <path>) [--repo <repo>]
-  agentstack work-item handoff <id> --pr <url> [--summary <text>|--summary-file <path>] [--repo <repo>]
+  agentstack work-item submit-review <id> --pr <url> [--summary <text>|--summary-file <path>] [--repo <repo>]
   agentstack work-item create-child <parent-id> --title <title> [--kind task] [--description <text>] [--execution-mode agent|human] [--ready-for-agent true|false] [--state <state>] [--repo <repo>]
 
 Command details:
@@ -601,8 +601,8 @@ Command details:
     Publishes an execution plan from --message or --file, sets state implementing, and records
     a local execution-plan event.
 
-  work-item handoff
-    Links a pull request, writes a completion report, sets state pr-open, and reports whether
+  work-item submit-review
+    Links a pull request, writes a review submission report, sets state pr-open, and reports whether
     policy requires human review.
 
   work-item create-child

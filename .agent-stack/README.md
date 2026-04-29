@@ -5,7 +5,7 @@ This folder contains the repository-local AgentStack Protocol assets consumed by
 ## Contents
 
 - `active-tracker.json`: selects the active tracker and points to its config/mapping.
-- `protocol/AGENT-PROTOCOL.md`: collaboration protocol, states, events, and handoff rules.
+- `protocol/AGENT-PROTOCOL.md`: collaboration protocol, states, events, and review submission rules.
 - `language/backlog-language.yaml`: canonical backlog vocabulary and DDD-style ubiquitous delivery language.
 - `trackers/<tracker>.mapping.yaml`: tracker-specific dictionary from native tracker concepts to canonical concepts.
 - `trackers/<tracker>.config.json`: repository-specific tracker connection/configuration. This file must not contain placeholders.
@@ -18,7 +18,7 @@ This folder contains the repository-local AgentStack Protocol assets consumed by
 Policy fields:
 
 - `requireAcceptanceCriteria`: used by `work-item graph` and `work-item claim` when calculating whether an item can start. If true, claim requires parsed acceptance criteria unless `--force` is used.
-- `requireHumanReviewBeforeMerge`: reported by `work-item handoff` as `reviewRequired`.
+- `requireHumanReviewBeforeMerge`: reported by `work-item submit-review` as `reviewRequired`.
 
 ## Skills
 

@@ -53,13 +53,13 @@ skills at .agents/skills
 4. Agents must create an execution plan before coding.
 5. Agents must synchronize meaningful progress back to the tracker.
 6. Agents must stop and raise a blocker instead of guessing through ambiguity.
-7. Agents open a PR and hand work back to humans unless policy explicitly says otherwise.
+7. Agents open a PR and submit completed work for review unless policy explicitly says otherwise.
 8. Humans decide merge and final closure by default.
 
 ## Runtime workflow
 
 ```text
-load language -> intake -> claim -> graph -> bootstrap -> plan -> implement -> sync -> handoff
+load language -> intake -> claim -> graph -> bootstrap -> plan -> implement -> sync -> submit-review
 ```
 
 The workflow is executed through skills under `.agents/skills/agentstack-*/SKILL.md`.
@@ -104,7 +104,7 @@ If local machine-readable runtime state is needed, store it under:
   protocol-state.json
   protocol-log.jsonl
   execution-plan.json
-  handoff-summary.md
+  submit-review-summary.md
 ```
 
 Do not use `.agent-stack/skills`; skills belong only in `.agents/skills`.

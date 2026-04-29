@@ -14,6 +14,6 @@ export const protocolSkills: readonly SkillDescriptor[] = [
   { name: 'agentstack-work-plan', description: 'Create a scoped execution plan before coding.', path: '.agents/skills/agentstack-work-plan/SKILL.md' },
   { name: 'agentstack-work-implement', description: 'Implement scoped changes and validate them.', path: '.agents/skills/agentstack-work-implement/SKILL.md' },
   { name: 'agentstack-tracker-sync', description: 'Keep tracker state aligned with execution progress.', path: '.agents/skills/agentstack-tracker-sync/SKILL.md' },
-  { name: 'agentstack-review-handoff', description: 'Open PRs and hand work to humans for review.', path: '.agents/skills/agentstack-review-handoff/SKILL.md' },
+  { name: 'agentstack-submit-review', description: 'Submit completed agent work for human review.', path: '.agents/skills/agentstack-submit-review/SKILL.md' },
   { name: 'agentstack-blocker-handling', description: 'Stop safely and publish blockers when progress is unsafe.', path: '.agents/skills/agentstack-blocker-handling/SKILL.md' },
 ];

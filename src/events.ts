@@ -32,7 +32,7 @@ export interface BlockerEvent extends BaseProtocolEvent<'blocker'> {
   needsHumanDecision: boolean;
 }
 
-export interface CompletionReportEvent extends BaseProtocolEvent<'completion-report'> {
+export interface SubmitReviewEvent extends BaseProtocolEvent<'submit-review'> {
   prUrl: string;
   summary: string;
 }
@@ -48,7 +48,7 @@ export type ProtocolEvent =
   | ExecutionPlanEvent
   | ProgressEvent
   | BlockerEvent
-  | CompletionReportEvent
+  | SubmitReviewEvent
   | CreateChildEvent;
 
 export type ProtocolEventKind = ProtocolEvent['kind'];
