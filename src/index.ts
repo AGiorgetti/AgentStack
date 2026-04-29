@@ -5,6 +5,7 @@ export * from './protocol.js';
 export * from './skills.js';
 export * from './tracker.js';
 export * from './cli.js';
+export * from './help.js';
 export * from './github.js';
 export * from './azure-devops.js';
 export * from './testing.js';

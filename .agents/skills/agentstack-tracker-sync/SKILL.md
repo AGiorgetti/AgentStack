@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Tracker Sync
 
+## CLI reference
+
+Use `agentstack help work-item progress --json`, `agentstack help work-item state --json`, `agentstack help work-item block --json`, and `agentstack help work-item submit-review --json` for the current sync command contracts.
+
 ## Procedure
 
 1. Write concise progress updates after meaningful milestones.
@@ -21,4 +25,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 3. Attach PR links when available.
 4. Record blockers immediately.
 5. Keep local protocol log and tracker state consistent.
-

@@ -20,6 +20,28 @@ Policy fields:
 - `requireAcceptanceCriteria`: used by `work-item graph` and `work-item claim` when calculating whether an item can start. If true, claim requires parsed acceptance criteria unless `--force` is used.
 - `requireHumanReviewBeforeMerge`: reported by `work-item submit-review` as `reviewRequired`.
 
+## CLI Help
+
+The CLI is the source of truth for AgentStack command contracts.
+
+Use:
+
+```sh
+agentstack help
+agentstack help work-item claim
+agentstack work-item claim --help
+```
+
+For agent and tool consumption, prefer machine-readable help:
+
+```sh
+agentstack help --json
+agentstack help work-item claim --json
+agentstack help work-item submit-review --json
+```
+
+AgentStack skills should reference `agentstack help ... --json` for current flags, output, examples, and policy effects instead of duplicating full command manuals.
+
 ## Skills
 
 Skills do **not** live under `.agent-stack`.

@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Submit Review
 
+## CLI reference
+
+Use `agentstack help work-item submit-review --json` for the current review submission command syntax, output shape, and policy effects.
+
 ## Procedure
 
 1. Verify validation results.

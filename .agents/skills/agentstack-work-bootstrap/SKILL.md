@@ -14,10 +14,13 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Work Bootstrap
 
+## CLI reference
+
+Use `agentstack help work-item claim --json` to inspect claim metadata fields that may need to be carried into branch or workspace naming.
+
 ## Procedure
 
 1. Confirm the item is claimed by this agent.
 2. Create or switch to an isolated branch/worktree.
 3. Record workspace and branch details in the local protocol log.
 4. Do not modify unrelated files before a plan exists.
-

@@ -136,6 +136,28 @@ agentstack work-item submit-review 123 --pr https://github.com/OWNER/REPO/pull/4
 
 All non-setup command output is JSON.
 
+## Generated Help
+
+The CLI is the source of truth for command syntax, flags, output shape, examples, and policy effects.
+
+For humans:
+
+```sh
+agentstack help
+agentstack help work-item claim
+agentstack work-item claim --help
+```
+
+For agents and tooling:
+
+```sh
+agentstack help --json
+agentstack help work-item claim --json
+agentstack help work-item submit-review --json
+```
+
+Skills should reference `agentstack help ... --json` for the live command contract instead of duplicating command manuals that can drift from the implementation.
+
 ## Command reference
 
 Most commands read the active tracker from `.agent-stack/active-tracker.json` in the target repository. Use `--repo <path>` when running from outside that repository.
@@ -349,8 +371,8 @@ npm unlink -g @agentstack/cli
 You can also run the CLI directly without linking:
 
 ```sh
-node C:\Work\AgentStack\dist\agentstack.js --help
-node C:\Work\AgentStack\dist\agentstack.js doctor --repo .
+node ./dist/agentstack.js --help
+node ./dist/agentstack.js doctor --repo .
 ```
 
 To test repository setup locally without a live tracker mutation:

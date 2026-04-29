@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Backlog Language
 
+## CLI reference
+
+Use `agentstack help language validate --json` and `agentstack help mapping validate --json` for the current validation command contracts.
+
 ## When to use
 
 Use this skill before tracker intake, graph analysis, planning, synchronization, or tracker updates.
@@ -32,4 +36,3 @@ Use this skill before tracker intake, graph analysis, planning, synchronization,
 - Do not assume a tracker label, tag, or field has protocol meaning unless the mapping says so.
 - Do not load mappings for inactive trackers.
 - Do not invent new canonical work item types.
-

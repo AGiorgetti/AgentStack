@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Tracker Intake
 
+## CLI reference
+
+Use `agentstack help work-item intake --json` for intake syntax and output, and `agentstack help work-item get --json` when a candidate item needs to be normalized in detail.
+
 ## Procedure
 
 1. Use `agentstack-backlog-language` to identify the active tracker and mapping.
@@ -26,4 +30,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 - No eligible item exists.
 - Required mapping or tracker data is missing.
-

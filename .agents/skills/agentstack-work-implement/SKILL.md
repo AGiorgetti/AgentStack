@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Work Implement
 
+## CLI reference
+
+Use `agentstack help work-item progress --json`, `agentstack help work-item block --json`, and `agentstack help work-item submit-review --json` when implementation reaches those tracker sync points.
+
 ## Procedure
 
 1. Follow the execution plan.
@@ -26,4 +30,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 - Do not broaden scope silently.
 - Do not continue after validation failures that require human decisions.
-

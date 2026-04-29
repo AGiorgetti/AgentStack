@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Tracker Claim
 
+## CLI reference
+
+Use `agentstack help work-item graph --json` before claim evaluation and `agentstack help work-item claim --json` for the current claim contract and output.
+
 ## Procedure
 
 1. Re-read the target work item.
@@ -26,4 +30,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 - One active claim per work item.
 - If claim creation is ambiguous or races, stop and raise a blocker.
-

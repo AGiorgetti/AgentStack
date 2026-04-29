@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Tracker Graph
 
+## CLI reference
+
+Use `agentstack help work-item graph --json` for the current graph command syntax, output shape, and policy effects.
+
 ## Procedure
 
 1. Load the active tracker mapping.
@@ -21,4 +25,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 3. Normalize relations into AgentStack Protocol relation types.
 4. Identify unresolved blockers.
 5. Report graph gaps or unsupported relation mappings as blockers.
-

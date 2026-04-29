@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Work Plan
 
+## CLI reference
+
+Use `agentstack help work-item plan --json` for the current plan command syntax and output contract.
+
 ## Procedure
 
 1. Restate the requested outcome.
@@ -28,4 +32,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 - Acceptance criteria are absent and the change is ambiguous.
 - Dependencies are unresolved.
 - The change exceeds the claimed scope.
-

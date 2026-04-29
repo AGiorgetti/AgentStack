@@ -10,6 +10,7 @@ import { recommendedPolicy, type ExecutionPolicy } from './policy.js';
 import { createClaimInfo, isEligibleForExecution } from './protocol.js';
 import { canonicalProtocolStates, canonicalWorkItemTypes } from './language/canonical.js';
 import { validateBacklogLanguageFile, validateTrackerMappingFile } from './language/validation.js';
+import { findHelpNode, renderHelpJson, renderHelpText } from './help.js';
 import type { ProtocolEvent, ProtocolEventKind, ProtocolEventPayload } from './events.js';
 import type { TrackerAdapter } from './tracker.js';
 
@@ -40,8 +41,18 @@ async function main(argv: string[]): Promise<void> {
   const parsed = parseArgs(argv);
   const [command, subcommand, ...rest] = parsed.positionals;
 
-  if (!command || command === 'help' || parsed.flags.help || parsed.flags.h) {
-    printUsage();
+  if (!command) {
+    printHelp([], parsed);
+    return;
+  }
+
+  if (command === 'help') {
+    printHelp([subcommand, ...rest].filter((value): value is string => Boolean(value)), parsed);
+    return;
+  }
+
+  if (parsed.flags.help || parsed.flags.h) {
+    printHelp(parsed.positionals, parsed);
     return;
   }
 
@@ -522,100 +533,17 @@ async function printJson(value: unknown): Promise<void> {
   console.log(JSON.stringify(value, null, 2));
 }
 
-function printUsage(): void {
-  console.log(`AgentStack Protocol CLI
+function printHelp(path: string[], parsed: ParsedArgs): void {
+  if (!findHelpNode(path)) {
+    throw new Error(`Unknown help topic: ${path.join(' ')}`);
+  }
 
-AgentStack gives agents a canonical JSON interface over the active backlog tracker.
-Run commands from a configured repository, or pass --repo <repo> to target one.
+  if (parsed.flags.json) {
+    console.log(JSON.stringify(renderHelpJson(path), null, 2));
+    return;
+  }
 
-Usage:
-  agentstack setup --tracker github --github-repository OWNER/REPO [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]
-  agentstack setup --tracker azure-devops --azdo-organization <url> --azdo-project <project> [--azdo-team <team>] [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]
-  agentstack doctor [--repo <repo>]
-  agentstack language validate [--repo <repo>]
-  agentstack mapping validate [--repo <repo>]
-
-Work item commands:
-  agentstack work-item get <id> [--repo <repo>]
-  agentstack work-item intake [--limit 10] [--agent <agent-id>] [--repo <repo>]
-  agentstack work-item graph <id> [--repo <repo>]
-  agentstack work-item claim <id> --agent <agent-id> [--branch <name>] [--workspace <path>] [--force] [--repo <repo>]
-  agentstack work-item release <id> --claim-token <token> [--repo <repo>]
-  agentstack work-item state <id> --state <state> [--repo <repo>]
-  agentstack work-item progress <id> --message <text> [--repo <repo>]
-  agentstack work-item block <id> --reason <text> [--repo <repo>]
-  agentstack work-item plan <id> (--message <text>|--file <path>) [--repo <repo>]
-  agentstack work-item submit-review <id> --pr <url> [--summary <text>|--summary-file <path>] [--repo <repo>]
-  agentstack work-item create-child <parent-id> --title <title> [--kind task] [--description <text>] [--execution-mode agent|human] [--ready-for-agent true|false] [--state <state>] [--repo <repo>]
-
-Command details:
-  setup
-    Installs repository-local protocol assets, tracker mapping/config, AgentStack skills,
-    and the managed AGENTS.md block. Deploys only the selected tracker profile.
-    --provision-tracker creates/updates GitHub labels; for Azure DevOps it verifies
-    CLI authentication and access to the configured project.
-
-  doctor
-    Verifies that .agent-stack exists, active tracker config is usable, and language and
-    mapping files validate. Use before starting agent work or after setup changes.
-
-  language validate
-    Validates .agent-stack/language/backlog-language.yaml. Use after changing canonical
-    backlog vocabulary or protocol language.
-
-  mapping validate
-    Validates the active .agent-stack/trackers/<tracker>.mapping.yaml. Use after changing
-    tracker labels, tags, fields, states, relation mappings, or work item type mappings.
-
-  work-item get
-    Reads one tracker item and returns a canonical WorkItem with normalized protocol fields:
-    executionMode, readyForAgent, protocolState, claim, tags, and relations.
-
-  work-item intake
-    Lists open items that appear ready for agent execution. --agent narrows results to
-    items assigned to a specific agent identifier.
-
-  work-item graph
-    Returns parent, children, blocked-by, blocks, dependency status, and a canStart decision
-    with policy reasons. Use this before claiming work.
-
-  work-item claim
-    Registers an active agent claim, sets protocol state claimed, writes claim metadata, and
-    records a local claim event. --force bypasses eligibility checks for controlled exceptions.
-
-  work-item release
-    Removes the active claim marker and records a release comment. Historical claim comments
-    remain for audit but are not reported as active once the active marker is gone.
-
-  work-item state
-    Sets a protocol state such as draft, ready, claimed, implementing, blocked, pr-open,
-    in-review, done, or abandoned using the active tracker mapping.
-
-  work-item progress
-    Adds a protocol-formatted progress comment and records a local progress event.
-
-  work-item block
-    Sets state blocked, comments with the blocker reason, and records a local blocker event.
-
-  work-item plan
-    Publishes an execution plan from --message or --file, sets state implementing, and records
-    a local execution-plan event.
-
-  work-item submit-review
-    Links a pull request, writes a review submission report, sets state pr-open, and reports whether
-    policy requires human review.
-
-  work-item create-child
-    Creates a child issue/work item, applies supported protocol metadata, and links it to the
-    parent through the active tracker.
-
-Tracker setup parameters:
-  GitHub:      --github-repository OWNER/REPO
-  Azure DevOps: --azdo-organization https://dev.azure.com/ORG --azdo-project PROJECT [--azdo-team TEAM]
-  Optional:    --provision-tracker creates or verifies tracker-side protocol configuration where supported
-
-All command output is JSON, except setup and help.
-`);
+  console.log(renderHelpText(path));
 }
 
 

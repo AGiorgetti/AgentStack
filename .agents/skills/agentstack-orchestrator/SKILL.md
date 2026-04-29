@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Orchestrator
 
+## CLI reference
+
+Use `agentstack help --json` for the full command catalog and `agentstack help <command> --json` for the current command contract before invoking workflow commands.
+
 ## Procedure
 
 1. Load `.agent-stack/README.md`.

@@ -14,6 +14,10 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 # Blocker Handling
 
+## CLI reference
+
+Use `agentstack help work-item block --json` for the current blocker command contract and `agentstack help work-item release --json` if the active claim may need to be released.
+
 ## Procedure
 
 1. State exactly what prevents progress.
@@ -26,4 +30,3 @@ allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
 
 - Do not guess through ambiguity.
 - Do not mark blocked work as done.
-
