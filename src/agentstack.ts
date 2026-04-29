@@ -169,14 +169,15 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
       return;
     }
 
+    case 'progress':
     case 'heartbeat': {
       const id = requireArg(rest[0], 'work item id');
       const message = readMessage(parsed, 'message', 'message-file');
       const ref = makeRef(context, id);
-      const body = formatProtocolComment('heartbeat', message);
+      const body = formatProtocolComment('progress', message);
       await context.tracker.addComment(ref, body);
-      appendRuntimeEvent(context.repoRoot, ref, 'heartbeat', { message });
-      await printJson({ synced: true, ref, event: 'heartbeat' });
+      appendRuntimeEvent(context.repoRoot, ref, 'progress', { message });
+      await printJson({ synced: true, ref, event: 'progress' });
       return;
     }
 
@@ -541,7 +542,7 @@ Work item commands:
   agentstack work-item claim <id> --agent <agent-id> [--branch <name>] [--workspace <path>] [--force] [--repo <repo>]
   agentstack work-item release <id> --claim-token <token> [--repo <repo>]
   agentstack work-item state <id> --state <state> [--repo <repo>]
-  agentstack work-item heartbeat <id> --message <text> [--repo <repo>]
+  agentstack work-item progress <id> --message <text> [--repo <repo>]
   agentstack work-item block <id> --reason <text> [--repo <repo>]
   agentstack work-item plan <id> (--message <text>|--file <path>) [--repo <repo>]
   agentstack work-item handoff <id> --pr <url> [--summary <text>|--summary-file <path>] [--repo <repo>]
@@ -590,8 +591,8 @@ Command details:
     Sets a protocol state such as draft, ready, claimed, implementing, blocked, pr-open,
     in-review, done, or abandoned using the active tracker mapping.
 
-  work-item heartbeat
-    Adds a protocol-formatted progress comment and records a local heartbeat event.
+  work-item progress
+    Adds a protocol-formatted progress comment and records a local progress event.
 
   work-item block
     Sets state blocked, comments with the blocker reason, and records a local blocker event.

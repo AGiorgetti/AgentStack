@@ -130,7 +130,7 @@ agentstack doctor
 agentstack work-item get 123
 agentstack work-item graph 123
 agentstack work-item claim 123 --agent codex-01
-agentstack work-item heartbeat 123 --message "Implementation started."
+agentstack work-item progress 123 --message "Implementation started."
 agentstack work-item handoff 123 --pr https://github.com/OWNER/REPO/pull/456
 ```
 
@@ -241,15 +241,17 @@ agentstack work-item state <id> --state <state> [--repo <repo>]
 
 Use this for explicit state transitions such as `ready`, `implementing`, `blocked`, `pr-open`, `in-review`, `done`, or `abandoned`. The command updates the tracker-native representation defined by the active mapping.
 
-### `agentstack work-item heartbeat`
+### `agentstack work-item progress`
 
-Adds a progress heartbeat comment.
+Adds a progress update comment.
 
 ```sh
-agentstack work-item heartbeat <id> --message <text> [--repo <repo>]
+agentstack work-item progress <id> --message <text> [--repo <repo>]
 ```
 
 Use this during long-running work to keep humans and other agents informed. It records a protocol-formatted tracker comment and appends a local runtime event under `.agent-stack/runs/<id>/`.
+
+`work-item heartbeat` is accepted as a compatibility alias, but new documentation and scripts should use `work-item progress`.
 
 ### `agentstack work-item block`
 
@@ -392,7 +394,7 @@ gh issue create \
   --title "AgentStack smoke test" \
   --body "## Acceptance Criteria
 - Smoke claim works
-- Smoke heartbeat works
+- Smoke progress works
 - Smoke handoff works" \
   --label exec:agent \
   --label ready:agent \
@@ -402,7 +404,7 @@ gh issue create \
 agentstack work-item get 1 --repo .
 agentstack work-item graph 1 --repo .
 agentstack work-item claim 1 --agent codex-smoke --repo . --force
-agentstack work-item heartbeat 1 --message "Smoke claim succeeded." --repo .
+agentstack work-item progress 1 --message "Smoke claim succeeded." --repo .
 agentstack work-item plan 1 --message "Smoke-test the AgentStack protocol command flow." --repo .
 agentstack work-item handoff 1 --pr https://github.com/OWNER/agentstack-smoke/pull/1 --summary "Smoke flow completed through handoff." --repo .
 ```
@@ -447,7 +449,7 @@ az boards work-item create \
   --project PROJECT \
   --type Task \
   --title "AgentStack smoke test" \
-  --description "Acceptance Criteria: Smoke claim works; Smoke heartbeat works; Smoke handoff works" \
+  --description "Acceptance Criteria: Smoke claim works; Smoke progress works; Smoke handoff works" \
   --fields "System.Tags=exec:agent; ready:agent; state:ready; type:task"
 ```
 
@@ -457,7 +459,7 @@ The Azure CLI prints the created work item JSON. Use its `id` in the following c
 agentstack work-item get <id> --repo .
 agentstack work-item graph <id> --repo .
 agentstack work-item claim <id> --agent codex-smoke --repo . --force
-agentstack work-item heartbeat <id> --message "Smoke claim succeeded." --repo .
+agentstack work-item progress <id> --message "Smoke claim succeeded." --repo .
 agentstack work-item plan <id> --message "Smoke-test the AgentStack protocol command flow." --repo .
 agentstack work-item handoff <id> --pr https://dev.azure.com/ORG/PROJECT/_git/REPO/pullrequest/1 --summary "Smoke flow completed through handoff." --repo .
 ```

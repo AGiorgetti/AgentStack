@@ -23,7 +23,7 @@ export interface ExecutionPlanEvent extends BaseProtocolEvent<'execution-plan'> 
   plan: string;
 }
 
-export interface HeartbeatEvent extends BaseProtocolEvent<'heartbeat'> {
+export interface ProgressEvent extends BaseProtocolEvent<'progress'> {
   message: string;
 }
 
@@ -46,7 +46,7 @@ export type ProtocolEvent =
   | ClaimReleaseEvent
   | StateChangeEvent
   | ExecutionPlanEvent
-  | HeartbeatEvent
+  | ProgressEvent
   | BlockerEvent
   | CompletionReportEvent
   | CreateChildEvent;

@@ -10,7 +10,7 @@ Possible future policy fields:
 - `allowAgentAutoStartChildren`: govern whether agents may immediately claim child items they create.
 - `allowAgentToCloseItems`: govern whether agents may move work items to terminal states without human action.
 - `claimTtlMinutes`: define how long an active claim remains valid before it can be considered stale.
-- `heartbeatIntervalMinutes`: define expected progress heartbeat frequency during long-running work.
+- `progressIntervalMinutes`: define expected progress update frequency during long-running work.
 - `allowStaleClaimRecovery`: govern whether agents may recover stale claims without human intervention.
 
 These fields should be added to `AGENT-POLICY.json` only when the CLI enforces them or exposes them in command output.
