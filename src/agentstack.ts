@@ -277,7 +277,7 @@ async function loadContext(parsed: ParsedArgs): Promise<CliContext> {
     : join(repoRoot, '.agent-stack', 'trackers', `${activeTracker.tracker}.config.json`);
   const rawConfig = readJson<Record<string, unknown>>(configFile);
   const policy = existsSync(join(repoRoot, '.agent-stack', 'policy', 'AGENT-POLICY.json'))
-    ? readJson<ExecutionPolicy>(join(repoRoot, '.agent-stack', 'policy', 'AGENT-POLICY.json'))
+    ? { ...recommendedPolicy, ...readJson<Partial<ExecutionPolicy>>(join(repoRoot, '.agent-stack', 'policy', 'AGENT-POLICY.json')) }
     : recommendedPolicy;
 
   if (activeTracker.tracker === 'github') {

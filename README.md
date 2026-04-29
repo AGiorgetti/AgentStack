@@ -80,7 +80,46 @@ If `AGENTS.md` already exists, setup preserves it and inserts or updates only th
 <!-- agentstack-protocol:end -->
 ```
 
-`policy/AGENT-POLICY.json` is loaded by the CLI for workflow decisions. It only contains fields currently used by the CLI: `requireAcceptanceCriteria` affects `work-item graph` and `work-item claim`, and `requireHumanReviewBeforeMerge` affects `work-item handoff` output.
+## Execution Policy
+
+`.agent-stack/policy/AGENT-POLICY.json` contains repository-local workflow gates for autonomous agents. The CLI loads this file for tracker-backed commands and merges it over built-in recommended defaults, so omitted fields fall back to the recommended value.
+
+Default policy:
+
+```json
+{
+  "requireHumanReviewBeforeMerge": true,
+  "requireAcceptanceCriteria": true
+}
+```
+
+Current policy fields:
+
+| Field | Default | CLI effect |
+| --- | --- | --- |
+| `requireAcceptanceCriteria` | `true` | Used by `work-item graph` and `work-item claim` when calculating whether a work item can start. If true, a work item without parsed acceptance criteria is reported with `missing-acceptance-criteria`; `work-item claim` refuses the claim unless `--force` is used. |
+| `requireHumanReviewBeforeMerge` | `true` | Used by `work-item handoff`. The command always sets protocol state `pr-open`, and its JSON output includes `reviewRequired` with this policy value so agents and humans know whether merge must remain human-controlled. |
+
+Policy does not replace tracker state. A work item still needs the active tracker mapping to resolve `executionMode`, `readyForAgent`, `protocolState`, claims, and dependency relations. Policy is applied after those tracker values are normalized into AgentStack's canonical work item model.
+
+Example `work-item graph` output when policy blocks automatic start:
+
+```json
+{
+  "canStart": false,
+  "reasons": [
+    "missing-acceptance-criteria"
+  ]
+}
+```
+
+Use `--force` on `work-item claim` only for controlled smoke tests or explicit human-approved exceptions:
+
+```sh
+agentstack work-item claim 123 --agent codex-smoke --force
+```
+
+Acceptance criteria parsing is not implemented yet, so the default policy currently makes `--force` necessary for the smoke-test claim commands shown later in this README.
 
 ## Agent usage
 
