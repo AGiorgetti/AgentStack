@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 
 const repoRoot = join(import.meta.dirname, '..');
 
-test('setup deploys .agent-stack gitignore asset', () => {
+test('setup deploys local agent-stack runtime assets', () => {
   const target = mkdtempSync(join(tmpdir(), 'agentstack-setup-'));
 
   try {
@@ -28,6 +28,10 @@ test('setup deploys .agent-stack gitignore asset', () => {
     assert.equal(
       readFileSync(join(target, '.agent-stack/.gitignore'), 'utf8'),
       '# AgentStack local runtime state\nlocal/\nruns/\n',
+    );
+    assert.deepEqual(
+      JSON.parse(readFileSync(join(target, '.agent-stack/workspace.json'), 'utf8')),
+      { baseBranch: null, worktreeRoot: null },
     );
   } finally {
     rmSync(target, { recursive: true, force: true });

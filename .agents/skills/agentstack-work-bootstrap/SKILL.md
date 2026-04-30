@@ -24,14 +24,16 @@ Use this skill after graph validation and before claim when an isolated branch, 
 ## Commands
 
 1. Run `agentstack work-item graph <id>` from the coordination checkout.
-2. Create a dedicated git worktree and branch for the work item.
-3. Change into the dedicated worktree.
-4. Run `agentstack agent identity init` or `agentstack agent identity show` in that worktree.
-5. Claim from inside that worktree with `agentstack work-item claim <id> --branch <name> --workspace <path>`.
+2. Resolve the base branch from `.agent-stack/workspace.json` `baseBranch`, then from the repository default branch, unless a human gave an explicit branch.
+3. Create a dedicated git worktree and branch for the work item.
+4. Change into the dedicated worktree.
+5. Run `agentstack agent identity init` or `agentstack agent identity show` in that worktree.
+6. Claim from inside that worktree with `agentstack work-item claim <id> --branch <name> --workspace <path>`.
 
 ## Decision rules
 
 - Use deterministic branch/workspace names that include the work item id.
+- Use `.agent-stack/workspace.json` `worktreeRoot` when configured; otherwise use `../<repo>-worktrees`.
 - The identity used for claim must live in the worktree that will implement the item.
 - Claim only after entering the isolated worktree.
 - Do not modify source files before the plan is recorded.
@@ -47,9 +49,10 @@ Use this skill after graph validation and before claim when an isolated branch, 
 ```sh
 repo_name=$(basename "$(git rev-parse --show-toplevel)")
 worktree_root="../${repo_name}-worktrees"
+base_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD || echo origin/main)
 mkdir -p "$worktree_root"
 git config --global --add safe.directory "$(cd "$worktree_root" && pwd -P)/*"
-git worktree add "${worktree_root}/123" -b agentstack/123 origin/main
+git worktree add "${worktree_root}/123" -b agentstack/123 "$base_branch"
 cd "${worktree_root}/123"
 agentstack agent identity init
 agentstack work-item claim 123 --branch agentstack/123 --workspace "${worktree_root}/123"

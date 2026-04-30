@@ -26,6 +26,15 @@ test('agent-stack gitignore excludes local runtime state', () => {
   assert.match(content, /^runs\/$/m);
 });
 
+test('workspace config asset exposes optional workspace defaults', () => {
+  const config = JSON.parse(readFileSync(join(repoRoot, '.agent-stack/workspace.json'), 'utf8'));
+
+  assert.deepEqual(config, {
+    baseBranch: null,
+    worktreeRoot: null,
+  });
+});
+
 test('tracker mapping assets parse, normalize, and validate through exported validators', () => {
   const githubPath = join(repoRoot, '.agent-stack/trackers/github.mapping.yaml');
   const azurePath = join(repoRoot, '.agent-stack/trackers/azure-devops.mapping.yaml');

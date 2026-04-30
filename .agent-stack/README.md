@@ -10,6 +10,7 @@ This folder contains the repository-local AgentStack Protocol assets consumed by
 - `trackers/<tracker>.mapping.yaml`: tracker-specific dictionary from native tracker concepts to canonical concepts.
 - `trackers/<tracker>.config.json`: repository-specific tracker connection/configuration. This file must not contain placeholders.
 - `policy/AGENT-POLICY.json`: execution policy gates for autonomous agents.
+- `workspace.json`: optional local workspace defaults such as base branch and worktree root.
 
 ## Policy
 

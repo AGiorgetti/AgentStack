@@ -116,6 +116,8 @@ from the dedicated worktree:
 
 The claim should be written from inside the dedicated workspace so claim metadata records the branch and workspace that will actually perform the implementation.
 
+Workspace bootstrap should start from `.agent-stack/workspace.json` `baseBranch` when configured. If it is not configured, use the repository default branch from `origin/HEAD`, then fall back to `origin/main`, `origin/master`, `main`, or `master`.
+
 ## Skill naming
 
 All AgentStack Protocol skills must:
@@ -137,6 +139,7 @@ AGENTS.md
 .agent-stack/
   README.md
   active-tracker.json
+  workspace.json
   protocol/AGENT-PROTOCOL.md
   language/backlog-language.yaml
   policy/AGENT-POLICY.json

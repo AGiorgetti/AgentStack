@@ -64,6 +64,7 @@ AGENTS.md
   active-tracker.json
   .gitignore
   PROMPTS.md
+  workspace.json
   protocol/AGENT-PROTOCOL.md
   language/backlog-language.yaml
   policy/AGENT-POLICY.json
@@ -173,6 +174,17 @@ Use `--agent` and `--claim-token` when running from CI or from a workspace that 
 
 When multiple agents may work at the same time, each work item should use a dedicated git worktree or equivalent isolated workspace. The main checkout should be used for setup, fetch, intake, and orchestration; implementation should happen in the per-item worktree.
 
+Worktree bootstrap uses `.agent-stack/workspace.json` for optional local workspace defaults:
+
+```json
+{
+  "baseBranch": null,
+  "worktreeRoot": null
+}
+```
+
+If `baseBranch` is omitted, use the repository default branch from `origin/HEAD`, then fall back to `origin/main`, `origin/master`, `main`, or `master`. If `worktreeRoot` is omitted, use `../<repo>-worktrees`.
+
 Recommended startup:
 
 ```sh
@@ -183,9 +195,10 @@ agentstack work-item graph 123
 
 repo_name=$(basename "$(git rev-parse --show-toplevel)")
 worktree_root="../${repo_name}-worktrees"
+base_branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD || echo origin/main)
 mkdir -p "$worktree_root"
 git config --global --add safe.directory "$(cd "$worktree_root" && pwd -P)/*"
-git worktree add "${worktree_root}/123" -b agentstack/123 origin/main
+git worktree add "${worktree_root}/123" -b agentstack/123 "$base_branch"
 cd "${worktree_root}/123"
 
 agentstack agent identity init
