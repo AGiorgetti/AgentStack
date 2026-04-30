@@ -47,7 +47,7 @@ test('GitHubTrackerAdapter.getWorkItem parses labels, relations, and claim metad
       id: 'ISSUE_101',
       number: 101,
       title: 'Implement scheduler guardrails',
-      body: 'Ensure autonomous claims do not overlap.',
+      body: 'Ensure autonomous claims do not overlap.\n\n## Acceptance Criteria\n- Claims are exclusive\n- Claims are auditable',
       labels: [
         'execution:agent',
         'ready-for-agent',
@@ -93,6 +93,7 @@ test('GitHubTrackerAdapter.getWorkItem parses labels, relations, and claim metad
   assert.equal(item.assignedAgent, 'codex-01');
   assert.equal(item.assignedHuman, 'alice');
   assert.equal(item.priority, 2);
+  assert.deepEqual(item.acceptanceCriteria, ['Claims are exclusive', 'Claims are auditable']);
   assert.equal(item.claim?.claimToken, 'clm_test_001');
   assert.equal(item.claim?.branchName, 'agent/101-scheduler-guardrails');
   assert.deepEqual(

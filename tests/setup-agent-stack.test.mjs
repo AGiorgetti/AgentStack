@@ -27,7 +27,7 @@ test('setup deploys .agent-stack gitignore asset', () => {
     assert.equal(result.status, 0, result.stderr || result.stdout);
     assert.equal(
       readFileSync(join(target, '.agent-stack/.gitignore'), 'utf8'),
-      '# AgentStack local runtime state\n.agent-stack/local/\n.agent-stack/runs/\n',
+      '# AgentStack local runtime state\nlocal/\nruns/\n',
     );
   } finally {
     rmSync(target, { recursive: true, force: true });

@@ -22,8 +22,8 @@ test('agent-stack gitignore excludes local runtime state', () => {
   const content = readFileSync(join(repoRoot, '.agent-stack/.gitignore'), 'utf8');
 
   assert.match(content, /# AgentStack local runtime state/);
-  assert.match(content, /^\.agent-stack\/local\/$/m);
-  assert.match(content, /^\.agent-stack\/runs\/$/m);
+  assert.match(content, /^local\/$/m);
+  assert.match(content, /^runs\/$/m);
 });
 
 test('tracker mapping assets parse, normalize, and validate through exported validators', () => {

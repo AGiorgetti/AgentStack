@@ -8,6 +8,7 @@ export * from './cli.js';
 export * from './help.js';
 export * from './github.js';
 export * from './azure-devops.js';
+export * from './acceptance-criteria.js';
 export * from './testing.js';
 export * from './language/canonical.js';
 export * from './language/mapping.js';

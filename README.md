@@ -62,6 +62,7 @@ Setup creates or updates:
 AGENTS.md
 .agent-stack/
   active-tracker.json
+  .gitignore
   PROMPTS.md
   protocol/AGENT-PROTOCOL.md
   language/backlog-language.yaml
@@ -121,7 +122,7 @@ Use `--force` on `work-item claim` only for controlled smoke tests or explicit h
 agentstack work-item claim 123 --agent codex-smoke --force
 ```
 
-Acceptance criteria parsing is not implemented yet, so the default policy currently makes `--force` necessary for the smoke-test claim commands shown later in this README.
+Acceptance criteria are parsed from tracker descriptions. Supported formats include an `Acceptance Criteria:` inline section separated by semicolons, or an `Acceptance Criteria` / `Definition of Done` Markdown or HTML section with bullets, checkboxes, numbered items, or plain lines.
 
 ## Agent usage
 
@@ -493,13 +494,13 @@ gh issue create \
 
 agentstack work-item get 1 --repo .
 agentstack work-item graph 1 --repo .
-agentstack work-item claim 1 --repo . --force
+agentstack work-item claim 1 --repo .
 agentstack work-item progress 1 --message "Smoke claim succeeded." --repo .
 agentstack work-item plan 1 --message "Smoke-test the AgentStack protocol command flow." --repo .
 agentstack work-item submit-review 1 --pr https://github.com/OWNER/agentstack-smoke/pull/1 --summary "Smoke flow completed through submit-review." --repo .
 ```
 
-The `claim` command currently uses `--force` in this smoke test because acceptance criteria parsing is not implemented yet. Until that parser exists, the default policy's `requireAcceptanceCriteria` gate cannot be satisfied automatically from the issue body.
+The claim should not need `--force` when the item is in `ready` state, has no active claim or open blockers, and includes parseable acceptance criteria.
 
 ### Live Azure DevOps Smoke Test
 
@@ -549,10 +550,10 @@ The Azure CLI prints the created work item JSON. Use its `id` in the following c
 ```sh
 agentstack work-item get <id> --repo .
 agentstack work-item graph <id> --repo .
-agentstack work-item claim <id> --repo . --force
+agentstack work-item claim <id> --repo .
 agentstack work-item progress <id> --message "Smoke claim succeeded." --repo .
 agentstack work-item plan <id> --message "Smoke-test the AgentStack protocol command flow." --repo .
 agentstack work-item submit-review <id> --pr https://dev.azure.com/ORG/PROJECT/_git/REPO/pullrequest/1 --summary "Smoke flow completed through submit-review." --repo .
 ```
 
-The `claim` command uses `--force` here for the same reason as the GitHub smoke test: acceptance criteria parsing is not implemented yet, so the default policy gate cannot be satisfied automatically from the work item description.
+The claim should not need `--force` when the item is in `ready` state, has no active claim or open blockers, and includes parseable acceptance criteria.

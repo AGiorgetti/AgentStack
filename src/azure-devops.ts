@@ -14,6 +14,7 @@ import {
   createExecFileRunner,
   parseJsonOutput,
 } from './cli.js';
+import { htmlToPlainText, parseAcceptanceCriteria } from './acceptance-criteria.js';
 
 interface AzureWorkItemResponse {
   id: number;
@@ -182,7 +183,7 @@ function parseClaimInfoFromDescription(description: string): ClaimInfo | undefin
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return htmlToPlainText(html).replace(/\s+/g, ' ').trim();
 }
 
 function toWorkItemId(ref: WorkItemRef): number {
@@ -719,6 +720,7 @@ export class AzureDevOpsTrackerAdapter implements TrackerAdapter {
       ref: this.createRef(String(item.id), item.url),
       title,
       description,
+      acceptanceCriteria: parseAcceptanceCriteria(descriptionHtml),
       ...(typeof normalizedPriority === 'number' ? { priority: normalizedPriority } : {}),
       executionMode,
       readyForAgent,

@@ -16,7 +16,7 @@ test('AzureDevOpsTrackerAdapter.getWorkItem parses tags, relation types, and emb
       fields: {
         'System.Title': 'Implement tracker abstraction',
         'System.Description':
-          '<p>Normalize GitHub and Azure DevOps trackers.</p><!-- agentstack-protocol:claim {"agentId":"azdo-agent","claimToken":"clm_az_001","claimedAt":"2026-04-23T12:00:00.000Z"} -->',
+          '<p>Normalize GitHub and Azure DevOps trackers.</p><h2>Acceptance Criteria</h2><ul><li>GitHub work items normalize</li><li>Azure DevOps work items normalize</li></ul><!-- agentstack-protocol:claim {"agentId":"azdo-agent","claimToken":"clm_az_001","claimedAt":"2026-04-23T12:00:00.000Z"} -->',
         'System.Tags':
           'execution:agent; ready-for-agent; protocol:ready; assigned-agent:azdo-agent; priority:1; area:tracker',
         'System.AssignedTo': { displayName: 'Alice Dev' },
@@ -83,6 +83,7 @@ test('AzureDevOpsTrackerAdapter.getWorkItem parses tags, relation types, and emb
   assert.equal(item.assignedAgent, 'azdo-agent');
   assert.equal(item.assignedHuman, 'Alice Dev');
   assert.equal(item.priority, 1);
+  assert.deepEqual(item.acceptanceCriteria, ['GitHub work items normalize', 'Azure DevOps work items normalize']);
   assert.equal(item.claim?.claimToken, 'clm_az_001');
   assert.deepEqual(
     item.relations.map((relation) => [relation.type, relation.target.id]),

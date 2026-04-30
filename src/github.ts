@@ -13,6 +13,7 @@ import {
   createExecFileRunner,
   parseJsonOutput,
 } from './cli.js';
+import { parseAcceptanceCriteria } from './acceptance-criteria.js';
 
 interface GitHubIssueListRow {
   number: number;
@@ -422,6 +423,7 @@ export class GitHubTrackerAdapter implements TrackerAdapter {
       ref: this.createRef(String(issue.number), issue.url),
       title: issue.title,
       description: issue.body ?? '',
+      acceptanceCriteria: parseAcceptanceCriteria(issue.body ?? ''),
       ...(typeof priority === 'number' ? { priority } : {}),
       executionMode: labels.includes(this.labels.executionAgentLabel) ? 'agent' : 'human',
       readyForAgent: labels.includes(this.labels.readyForAgentLabel),
