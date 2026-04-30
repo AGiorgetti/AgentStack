@@ -1044,6 +1044,29 @@ git branch -d feat/codex-fix-auth  # -d ensures branch was merged
 git worktree prune
 ```
 
+### Concrete safe.directory Fallback
+
+The normal setup should register the repo-scoped wildcard root, not each concrete worktree. If Git still reports dubious ownership inside a worktree, add the concrete path as a fallback:
+
+```bash
+git config --global --add safe.directory "$(pwd -P)"
+```
+
+When a concrete fallback path was registered with `safe.directory`, remove that exact value after deleting the worktree:
+
+```bash
+git config --global --fixed-value --unset-all safe.directory "$(cd ../myapp-worktrees && pwd -P)/codex-fix-auth"
+```
+
+If the worktree path is already gone, compute the absolute path from its parent directory:
+
+```bash
+stale_path="$(cd ../myapp-worktrees && pwd -P)/codex-fix-auth"
+git config --global --fixed-value --unset-all safe.directory "$stale_path"
+```
+
+Use `git config --global --get-all safe.directory` to inspect remaining entries. Keep the repo-scoped wildcard entry, such as `../myapp-worktrees/*`, while that worktree root is still in use.
+
 ### Discard Failed Branch
 
 ```bash

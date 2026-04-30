@@ -43,6 +43,10 @@ echo ""
 
 # Create worktrees directory if needed
 mkdir -p "$WORKTREE_ROOT"
+WORKTREE_ROOT_ABS="$(cd "$WORKTREE_ROOT" && pwd -P)"
+
+# Allow sandboxed agents to run Git inside this repo's worktree root.
+git config --global --add safe.directory "${WORKTREE_ROOT_ABS}/*"
 
 # Create worktree
 echo "Creating worktree..."
@@ -66,6 +70,7 @@ echo ""
 echo "Verification:"
 echo "  Current branch: $(git branch --show-current)"
 echo "  Worktree path:  $(git rev-parse --show-toplevel)"
+echo "  Safe root:      ${WORKTREE_ROOT_ABS}/*"
 echo "  Expected branch: $(cat "$GIT_DIR/agent-expected-branch")"
 echo "  Expected worktree: $(cat "$GIT_DIR/agent-expected-worktree")"
 echo ""

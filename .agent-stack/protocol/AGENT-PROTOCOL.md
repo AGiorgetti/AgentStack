@@ -74,13 +74,33 @@ Recommended layout:
 main checkout
   used for setup, fetch, intake, and orchestration
 
-../agentstack-worktrees/
+../<repo>-worktrees/
   <work-item-id>-<agent-suffix>/
     dedicated git worktree
     dedicated branch
     dedicated .agent-stack/local/agent-identity.json
     dedicated .agent-stack/runs/<work-item-id>/claim.json
 ```
+
+The repo-scoped worktree root should be registered as a Git safe directory root for sandboxed agents:
+
+```sh
+git config --global --add safe.directory "$(cd ../<repo>-worktrees && pwd -P)/*"
+```
+
+Do not register concrete worktree paths by default. If Git still reports dubious ownership inside a worktree, register the concrete path as a fallback:
+
+```sh
+git config --global --add safe.directory "$(pwd -P)"
+```
+
+After deleting a worktree that used a concrete fallback entry, remove that exact `safe.directory` value:
+
+```sh
+git config --global --fixed-value --unset-all safe.directory "$(cd ../<repo>-worktrees && pwd -P)/<work-item-id>-<agent-suffix>"
+```
+
+Keep the repo-scoped wildcard entry while that worktree root is still used by agents.
 
 Agents must not share one mutable checkout for implementation work. Shared checkouts share a git index, working tree, local runtime files, dependency/build outputs, and branch state, so parallel agents can interfere with each other even when they claim different tracker items.
 

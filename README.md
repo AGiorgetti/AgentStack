@@ -134,7 +134,7 @@ agentstack work-item get 123
 agentstack work-item graph 123
 # create or enter an isolated workspace/worktree for item 123
 agentstack agent identity init
-agentstack work-item claim 123 --branch agentstack/123 --workspace ../agentstack-worktrees/123
+agentstack work-item claim 123 --branch agentstack/123 --workspace ../<repo>-worktrees/123
 agentstack work-item progress 123 --message "Implementation started."
 agentstack work-item submit-review 123 --pr https://github.com/OWNER/REPO/pull/456
 ```
@@ -181,15 +181,33 @@ git fetch origin
 agentstack work-item get 123
 agentstack work-item graph 123
 
-git worktree add ../agentstack-worktrees/123 -b agentstack/123 origin/main
-cd ../agentstack-worktrees/123
+repo_name=$(basename "$(git rev-parse --show-toplevel)")
+worktree_root="../${repo_name}-worktrees"
+mkdir -p "$worktree_root"
+git config --global --add safe.directory "$(cd "$worktree_root" && pwd -P)/*"
+git worktree add "${worktree_root}/123" -b agentstack/123 origin/main
+cd "${worktree_root}/123"
 
 agentstack agent identity init
-agentstack work-item claim 123 --branch agentstack/123 --workspace ../agentstack-worktrees/123
+agentstack work-item claim 123 --branch agentstack/123 --workspace "${worktree_root}/123"
 agentstack work-item plan 123 --message "..."
 ```
 
 Claim from inside the worktree that will perform the implementation. This keeps the identity file, claim token, git index, branch, build artifacts, and local runtime state isolated from other agents.
+
+If Git still reports dubious ownership inside a worktree, add the concrete path as a fallback:
+
+```sh
+git config --global --add safe.directory "$(pwd -P)"
+```
+
+After removing a worktree that used a concrete fallback entry, clean up that exact Git safe-directory value:
+
+```sh
+git config --global --fixed-value --unset-all safe.directory "$(cd "$worktree_root" && pwd -P)/123"
+```
+
+Keep the repo-scoped wildcard entry while the worktree root is still in use.
 
 ## Generated Help
 

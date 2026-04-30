@@ -45,8 +45,12 @@ Use this skill after graph validation and before claim when an isolated branch, 
 ## Example
 
 ```sh
-git worktree add ../agentstack-worktrees/123 -b agentstack/123 origin/main
-cd ../agentstack-worktrees/123
+repo_name=$(basename "$(git rev-parse --show-toplevel)")
+worktree_root="../${repo_name}-worktrees"
+mkdir -p "$worktree_root"
+git config --global --add safe.directory "$(cd "$worktree_root" && pwd -P)/*"
+git worktree add "${worktree_root}/123" -b agentstack/123 origin/main
+cd "${worktree_root}/123"
 agentstack agent identity init
-agentstack work-item claim 123 --branch agentstack/123 --workspace ../agentstack-worktrees/123
+agentstack work-item claim 123 --branch agentstack/123 --workspace "${worktree_root}/123"
 ```

@@ -49,5 +49,5 @@ Use this skill after graph validation and workspace bootstrap, immediately befor
 agentstack work-item get 123
 agentstack work-item graph 123
 agentstack agent identity init
-agentstack work-item claim 123 --branch agentstack/123 --workspace ../agentstack-worktrees/123
+agentstack work-item claim 123 --branch agentstack/123 --workspace ../<repo>-worktrees/123
 ```
