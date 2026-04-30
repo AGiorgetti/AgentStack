@@ -354,7 +354,7 @@ function activeTrackerFile() {
 
 mkdirSync(targetStack, { recursive: true });
 
-for (const rel of ['.gitignore', 'README.md', 'PROMPTS.md', 'workspace.json', 'protocol', 'language', 'policy']) {
+for (const rel of ['.gitignore', 'README.md', 'PROMPTS.md', 'workspace.json', 'templates', 'protocol', 'language', 'policy']) {
   copyFileOrDir(join(sourceStack, rel), join(targetStack, rel));
 }
 
@@ -380,15 +380,16 @@ Read in this order:
 3. \`.agent-stack/language/backlog-language.yaml\`
 4. \`.agent-stack/policy/AGENT-POLICY.json\`
 5. \`.agent-stack/active-tracker.json\`
-6. the active tracker mapping/config in \`.agent-stack/trackers/\`
-7. \`.agents/skills/agentstack-*/SKILL.md\`
-8. \`.agents/skills/git-worktree-ops/SKILL.md\`
+6. \`.agent-stack/templates/markdown-style.md\`
+7. the active tracker mapping/config in \`.agent-stack/trackers/\`
+8. \`.agents/skills/agentstack-*/SKILL.md\`
+9. \`.agents/skills/git-worktree-ops/SKILL.md\`
 
 Active tracker: \`${args.tracker}\`.
 
 Use the \`agentstack\` CLI for tracker-backed work. Do not call tracker-native CLIs directly for normal protocol operations unless the AgentStack CLI cannot perform the required operation.
 
-Do not process inactive tracker files. Skills live only under \`.agents/skills\`. AgentStack protocol skills start with \`agentstack-\`; \`git-worktree-ops\` is the supporting skill for isolated git worktree operations.`);
+Do not process inactive tracker files. Write tracker comments, plans, blockers, review summaries, and child work item descriptions using the Markdown style template. Skills live only under \`.agents/skills\`. AgentStack protocol skills start with \`agentstack-\`; \`git-worktree-ops\` is the supporting skill for isolated git worktree operations.`);
 
 const uses = new Set(args.agents);
 if (uses.has('claude')) {

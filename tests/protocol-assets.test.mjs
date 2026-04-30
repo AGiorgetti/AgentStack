@@ -35,6 +35,14 @@ test('workspace config asset exposes optional workspace defaults', () => {
   });
 });
 
+test('markdown style template is available for tracker text', () => {
+  const content = readFileSync(join(repoRoot, '.agent-stack/templates/markdown-style.md'), 'utf8');
+
+  assert.match(content, /# Markdown Style/);
+  assert.match(content, /readable Markdown/);
+  assert.match(content, /Avoid dense paragraphs/);
+});
+
 test('tracker mapping assets parse, normalize, and validate through exported validators', () => {
   const githubPath = join(repoRoot, '.agent-stack/trackers/github.mapping.yaml');
   const azurePath = join(repoRoot, '.agent-stack/trackers/azure-devops.mapping.yaml');

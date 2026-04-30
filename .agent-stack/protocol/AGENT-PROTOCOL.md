@@ -64,6 +64,8 @@ load language -> intake -> graph -> bootstrap workspace -> identity -> claim -> 
 
 The workflow is executed through protocol skills under `.agents/skills/agentstack-*/SKILL.md`, with `.agents/skills/git-worktree-ops/SKILL.md` used for git worktree isolation.
 
+Agents must write tracker comments, execution plans, blockers, review summaries, and child work item descriptions in readable Markdown. Use `.agent-stack/templates/markdown-style.md` for repository-local formatting guidance.
+
 ## Concurrent agent workspaces
 
 Multiple agents may work in the same repository at the same time only when each claimed work item uses an isolated mutable workspace.
@@ -140,6 +142,7 @@ AGENTS.md
   README.md
   active-tracker.json
   workspace.json
+  templates/markdown-style.md
   protocol/AGENT-PROTOCOL.md
   language/backlog-language.yaml
   policy/AGENT-POLICY.json

@@ -33,6 +33,10 @@ test('setup deploys local agent-stack runtime assets', () => {
       JSON.parse(readFileSync(join(target, '.agent-stack/workspace.json'), 'utf8')),
       { baseBranch: null, worktreeRoot: null },
     );
+    assert.match(
+      readFileSync(join(target, '.agent-stack/templates/markdown-style.md'), 'utf8'),
+      /Avoid dense paragraphs/,
+    );
   } finally {
     rmSync(target, { recursive: true, force: true });
   }
