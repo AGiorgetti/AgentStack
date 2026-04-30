@@ -354,7 +354,7 @@ function activeTrackerFile() {
 
 mkdirSync(targetStack, { recursive: true });
 
-for (const rel of ['README.md', 'PROMPTS.md', 'protocol', 'language', 'policy']) {
+for (const rel of ['.gitignore', 'README.md', 'PROMPTS.md', 'protocol', 'language', 'policy']) {
   copyFileOrDir(join(sourceStack, rel), join(targetStack, rel));
 }
 

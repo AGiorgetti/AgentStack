@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,6 +16,14 @@ test('protocol language asset parses and validates through exported validator', 
   const result = validateBacklogLanguageFile(join(repoRoot, '.agent-stack/language/backlog-language.yaml'));
 
   assert.deepEqual(result, { ok: true, issues: [] });
+});
+
+test('agent-stack gitignore excludes local runtime state', () => {
+  const content = readFileSync(join(repoRoot, '.agent-stack/.gitignore'), 'utf8');
+
+  assert.match(content, /# AgentStack local runtime state/);
+  assert.match(content, /^\.agent-stack\/local\/$/m);
+  assert.match(content, /^\.agent-stack\/runs\/$/m);
 });
 
 test('tracker mapping assets parse, normalize, and validate through exported validators', () => {
