@@ -146,7 +146,7 @@ test('AzureDevOpsTrackerAdapter.createChild creates the item and links it as a c
     },
     {
       title: 'Add claim reconciliation tests',
-      description: 'Cover resume and revoke scenarios.',
+      description: '- Cover resume scenarios\n- Cover revoke scenarios',
       executionMode: 'agent',
       readyForAgent: true,
       protocolState: 'ready',
@@ -172,6 +172,7 @@ test('AzureDevOpsTrackerAdapter.createChild creates the item and links it as a c
   assert.ok(fields.includes('System.Tags=area:tests; execution:agent; ready-for-agent; protocol:ready; assigned-agent:agent-7; priority:2'));
   assert.ok(createCall.args.includes('--type'));
   assert.ok(createCall.args.includes('Task'));
+  assert.ok(createCall.args.includes('- Cover resume scenarios\n- Cover revoke scenarios'));
 
   const relationCall = runner.calls.find(
     (call) => call.command === 'az' && call.args[0] === 'boards' && call.args[1] === 'work-item' && call.args[2] === 'relation' && call.args[3] === 'add',

@@ -11,6 +11,7 @@ import { createClaimInfo, isEligibleForExecution } from './protocol.js';
 import { canonicalProtocolStates, canonicalWorkItemTypes } from './language/canonical.js';
 import { validateBacklogLanguageFile, validateTrackerMappingFile } from './language/validation.js';
 import { findHelpNode, renderHelpJson, renderHelpText } from './help.js';
+import { ensureMarkdownSection, normalizeMarkdown } from './markdown.js';
 import type { ProtocolEvent, ProtocolEventKind, ProtocolEventPayload } from './events.js';
 import type { TrackerAdapter } from './tracker.js';
 
@@ -280,7 +281,7 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
       const ref = makeRef(context, id);
       const draft: Partial<WorkItem> = {
         title,
-        description: getStringFlag(parsed, 'description') ?? '',
+        description: normalizeMarkdown(getStringFlag(parsed, 'description') ?? ''),
         executionMode: getStringFlag(parsed, 'execution-mode') === 'agent' ? 'agent' : 'human',
         readyForAgent: getStringFlag(parsed, 'ready-for-agent') === 'true',
         protocolState: (getStringFlag(parsed, 'state') as ProtocolState | undefined) ?? 'draft',
@@ -589,7 +590,7 @@ function requireLocalClaimToken(repoRoot: string, ref: WorkItemRef): string {
 }
 
 function formatProtocolComment(kind: string, body: string): string {
-  return `<!-- agentstack-protocol:${kind} -->\n## AgentStack Protocol: ${kind}\n\n${body.trim()}\n`;
+  return ensureMarkdownSection(kind, body);
 }
 
 function appendRuntimeEvent<K extends ProtocolEventKind>(
