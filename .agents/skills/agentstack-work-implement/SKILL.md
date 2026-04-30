@@ -8,7 +8,7 @@ metadata:
   project: agentstack-protocol
   version: "0.1.0"
   tags: "agentstack-protocol backlog autonomous-agents"
-allowed-tools: Read Bash(git:*) Bash(gh:*) Bash(az:*)
+allowed-tools: Read Bash(agentstack:*) Bash(git:*) Bash(gh:*) Bash(az:*)
 ---
 
 # Work Implement

@@ -46,6 +46,29 @@ This probably deserves a dedicated skill, such as `agentstack-worktree-bootstrap
 
 Until this exists, skills should describe git worktrees as the recommended manual isolation mechanism for concurrent agents.
 
+## Skill-Specific Markdown Templates
+
+The active protocol has one simple repository-customizable style guide at `.agent-stack/templates/markdown-style.md`. That is enough for now and avoids scattering formatting rules through every skill.
+
+If agents need more structured guidance later, add optional skill-specific templates:
+
+```text
+.agent-stack/templates/
+  progress.md
+  execution-plan.md
+  blocker.md
+  submit-review.md
+  child-work-item.md
+```
+
+Skills should reference those files by path instead of duplicating template text. The CLI could later expose them through a command such as:
+
+```sh
+agentstack template show submit-review
+```
+
+This should remain guidance until the CLI can validate or render templates consistently.
+
 ## Partial Handoff
 
 `submit-review` now means completed agent work has been submitted for human review, usually through a pull request. A future `handoff` command should be added with different semantics for partial or interrupted work.
