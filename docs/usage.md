@@ -94,7 +94,10 @@ stateDiagram-v2
   Implementing --> Blocked: blocker found
   Implementing --> SubmitReview
   SubmitReview --> HumanReview
-  HumanReview --> Done
+  HumanReview --> Done: human merges
+  HumanReview --> AgentMerge: human authorizes agent merge
+  HumanReview --> Implementing: changes requested
+  AgentMerge --> Done
   Blocked --> Release: abandon or hand back
 ```
 
@@ -227,6 +230,103 @@ agentstack work-item submit-review 123 \
 ```
 
 The command links the PR, writes a review submission report, sets protocol state `pr-open`, and returns `reviewRequired` based on policy.
+
+## Post-Review Outcomes
+
+After human review, there are three supported operating patterns. AgentStack currently provides `submit-review`, `progress`, and generic `state` transitions; it does not yet provide a dedicated `merge`, `complete`, or `changes-requested` command.
+
+```mermaid
+flowchart TD
+  Review["Human reviews PR"] --> Manual["Human merges and completes manually"]
+  Review --> AgentOk["Human authorizes agent to merge"]
+  Review --> Notes["Human leaves notes or requested changes"]
+  Manual --> Done["Tracker item done"]
+  AgentOk --> AgentMerge["Agent merges using PR/git tooling"]
+  AgentMerge --> StateDone["agentstack work-item state --state done"]
+  Notes --> Implementing["agentstack work-item state --state implementing"]
+  Implementing --> MoreWork["Agent addresses comments"]
+  MoreWork --> SubmitAgain["agentstack work-item submit-review"]
+```
+
+### Human Merges And Completes Manually
+
+Use this when policy requires human-controlled merge or the reviewer wants to finish the item directly.
+
+1. Merge the pull request in GitHub or Azure DevOps.
+2. Complete the tracker item manually:
+   - GitHub: close the issue if that is the team's completion signal, and set the mapped protocol state to `done` if using AgentStack labels.
+   - Azure DevOps: move the work item to the team's completed state, and set the mapped protocol state/tag to `done` if using AgentStack tags.
+3. Remove the active claim marker manually if the tracker still shows one:
+   - GitHub default profile: remove `claim:active`.
+   - Azure DevOps default profile: remove `claim:active` from tags.
+
+If the human prefers to use the CLI for only the protocol state, run:
+
+```sh
+agentstack work-item state 123 --state done
+```
+
+This sets the AgentStack protocol state. It does not merge the PR, close a GitHub issue, move an Azure Boards state, or remove the active claim marker.
+
+### Human Authorizes The Agent To Merge And Complete
+
+Use this when review is approved and the human explicitly wants the agent to finish the mechanics.
+
+The human should leave an unambiguous instruction in the PR, tracker item, or chat, for example:
+
+```text
+Review approved. Agent may merge the PR and complete work item 123.
+```
+
+The agent should then:
+
+1. Re-check the PR status and required checks with the repository's normal PR tooling.
+2. Merge the PR using GitHub or Azure DevOps tooling, according to the repository's merge policy.
+3. Synchronize AgentStack state:
+
+```sh
+agentstack work-item progress 123 --message "Review approved. PR merged; marking the work item done."
+agentstack work-item state 123 --state done
+```
+
+If the active claim marker should be cleared, the claiming agent can also run:
+
+```sh
+agentstack work-item release 123
+```
+
+Today `release` means "remove the active claim marker" and writes a release comment. It is primarily intended for abandon or handoff, so teams that want a cleaner successful-completion audit trail should prefer a future dedicated `complete` command instead of overloading release.
+
+### Human Requests Changes
+
+Use this when the review has notes, comments, or requested changes and the PR should not be merged yet.
+
+The human should leave actionable review comments in the PR and, if needed, a short tracker or chat instruction:
+
+```text
+Changes requested. Address the PR review comments, keep work item 123 open, and resubmit for review.
+```
+
+The agent should then move the protocol state back to implementation and record what it is doing:
+
+```sh
+agentstack work-item state 123 --state implementing
+agentstack work-item progress 123 --message "Review changes requested. Addressing PR comments before resubmitting."
+```
+
+After addressing the comments and updating the PR, the agent submits review again:
+
+```sh
+agentstack work-item submit-review 123 \
+  --pr https://github.com/OWNER/REPO/pull/456 \
+  --summary "Addressed review comments and reran validation."
+```
+
+If the requested changes reveal a blocker rather than normal follow-up work, use `block` instead:
+
+```sh
+agentstack work-item block 123 --reason "Review requested a product decision before implementation can continue."
+```
 
 ## Validation
 

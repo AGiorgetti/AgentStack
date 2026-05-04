@@ -139,6 +139,15 @@ agentstack work-item state <id> --state <state> [--repo <repo>]
 
 Supported canonical states are defined by the repository language and implementation, including `draft`, `ready`, `claimed`, `implementing`, `blocked`, `pr-open`, `in-review`, `done`, and `abandoned`.
 
+Common post-review uses:
+
+```sh
+agentstack work-item state <id> --state implementing
+agentstack work-item state <id> --state done
+```
+
+`state` only updates the AgentStack protocol state through the active tracker mapping. It does not merge a pull request, close a GitHub issue, move an Azure Boards workflow state, or clear the active claim marker.
+
 ## `agentstack work-item progress`
 
 Adds a progress update comment.
@@ -183,6 +192,8 @@ agentstack work-item submit-review <id> --pr <url> [--summary <text>|--summary-f
 ```
 
 The command links the PR URL, writes a review submission report, sets protocol state `pr-open`, and reports `reviewRequired` from repository policy.
+
+After review, use tracker-native PR tooling for merge decisions. Use `work-item state --state done` after completion, or `work-item state --state implementing` plus `progress` when the human requests changes.
 
 ## `agentstack work-item create-child`
 

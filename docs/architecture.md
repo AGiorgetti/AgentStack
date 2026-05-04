@@ -88,6 +88,25 @@ AgentStack writes local runtime state under `.agent-stack`:
 
 Product repositories should commit protocol assets, language, policy, mapping, and skills. They should not commit local identity, claim tokens, or runtime logs.
 
+## Review Lifecycle Boundary
+
+The current CLI intentionally stops at review submission plus protocol state synchronization:
+
+- `work-item submit-review` links reviewable work and sets protocol state `pr-open`.
+- `work-item state` can move the protocol state to `implementing`, `in-review`, `done`, or another canonical state.
+- `work-item progress` records human-readable follow-up notes.
+- `work-item release` removes an active claim marker, but its current wording is release-oriented rather than completion-oriented.
+
+The CLI does not currently merge pull requests, close GitHub issues, move Azure Boards workflow states, or provide a dedicated `complete` command. If that behavior becomes product scope, add it as an explicit command rather than hiding it behind `state`.
+
+A future completion command should probably:
+
+- verify that the PR is merged or merge it only when explicitly authorized;
+- set protocol state `done`;
+- clear the active claim marker with completion-oriented audit text;
+- optionally close or transition the tracker item through tracker-specific adapter behavior;
+- emit a local completion event.
+
 ## Setup Architecture
 
 `agentstack setup` is implemented as a handoff from `src/agentstack.ts` to `.agent-stack/install/setup-agent-stack.mjs`.
