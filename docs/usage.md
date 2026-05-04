@@ -235,6 +235,8 @@ The command links the PR, writes a review submission report, sets protocol state
 
 After human review, there are three supported operating patterns. AgentStack currently provides `submit-review`, `progress`, and generic `state` transitions; it does not yet provide a dedicated `merge`, `complete`, or `changes-requested` command.
 
+Agents should use `.agents/skills/agentstack-pr-complete/SKILL.md` when a human explicitly authorizes agent completion, and `.agents/skills/agentstack-pr-rework/SKILL.md` when PR review comments require more work.
+
 ```mermaid
 flowchart TD
   Review["Human reviews PR"] --> Manual["Human merges and completes manually"]
@@ -278,7 +280,7 @@ The human should leave an unambiguous instruction in the PR, tracker item, or ch
 Review approved. Agent may merge the PR and complete work item 123.
 ```
 
-The agent should then:
+The agent should use `agentstack-pr-complete` and then:
 
 1. Re-check the PR status and required checks with the repository's normal PR tooling.
 2. Merge the PR using GitHub or Azure DevOps tooling, according to the repository's merge policy.
@@ -307,7 +309,7 @@ The human should leave actionable review comments in the PR and, if needed, a sh
 Changes requested. Address the PR review comments, keep work item 123 open, and resubmit for review.
 ```
 
-The agent should then move the protocol state back to implementation and record what it is doing:
+The agent should use `agentstack-pr-rework`, then move the protocol state back to implementation and record what it is doing:
 
 ```sh
 agentstack work-item state 123 --state implementing

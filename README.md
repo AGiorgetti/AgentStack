@@ -49,6 +49,7 @@ The important design choices are:
 - **Policy gates**: readiness, acceptance criteria, claims, dependencies, blockers, and human review are enforced through explicit repository policy.
 - **Isolated execution**: concurrent agents work in separate git worktrees or equivalent isolated workspaces.
 - **Human-controlled merge**: completed agent work is submitted for review; humans decide merge by default.
+- **Explicit post-review paths**: approved completion and requested-changes rework are handled by dedicated AgentStack skills.
 
 ## Install
 

@@ -44,6 +44,15 @@ agentstack help work-item submit-review --json
 
 AgentStack skills should reference `agentstack help ... --json` for current flags, output, examples, and policy effects instead of duplicating full command manuals.
 
+## Post-review skills
+
+Review submission is not the end of every workflow. After human review:
+
+- Use `.agents/skills/agentstack-pr-complete/SKILL.md` only when a human explicitly approves the PR and authorizes the agent to merge or complete the work item.
+- Use `.agents/skills/agentstack-pr-rework/SKILL.md` when the PR has comments, requested changes, or other review notes requiring more work.
+
+These skills use current CLI primitives such as `work-item progress`, `work-item state`, `work-item block`, and `work-item submit-review`. The CLI does not currently provide a dedicated `complete` or `changes-requested` command.
+
 ## Local Agent Identity
 
 The CLI can create local, uncommitted agent identity state under:

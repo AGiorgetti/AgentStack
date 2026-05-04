@@ -96,6 +96,8 @@ The current CLI intentionally stops at review submission plus protocol state syn
 - `work-item state` can move the protocol state to `implementing`, `in-review`, `done`, or another canonical state.
 - `work-item progress` records human-readable follow-up notes.
 - `work-item release` removes an active claim marker, but its current wording is release-oriented rather than completion-oriented.
+- `.agents/skills/agentstack-pr-complete/SKILL.md` guides approved post-review completion.
+- `.agents/skills/agentstack-pr-rework/SKILL.md` guides requested-changes follow-up.
 
 The CLI does not currently merge pull requests, close GitHub issues, move Azure Boards workflow states, or provide a dedicated `complete` command. If that behavior becomes product scope, add it as an explicit command rather than hiding it behind `state`.
 

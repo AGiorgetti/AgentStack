@@ -32,7 +32,8 @@ Use this skill when implementation is complete, validation has run, and the work
 - The summary must include changes, validation, risks, and known limitations.
 - `submit-review` means the agent's scoped work is complete and review-ready.
 - Do not use this skill for partial work transfer; true partial handoff is future protocol behavior.
-- Do not self-approve or merge unless repository policy explicitly allows it.
+- Do not self-approve or merge from this skill. Use `agentstack-pr-complete` only after explicit human authorization.
+- Use `agentstack-pr-rework` if the human requests changes after review.
 
 ## Stop or escalate
 

@@ -25,12 +25,14 @@ Use this skill to choose the next AgentStack workflow skill while executing trac
 
 1. Run `agentstack doctor` before relying on protocol assets.
 2. Run `agentstack help --json` when command contracts are needed.
-3. Delegate to the specific workflow skill for intake, graph, bootstrap, claim, plan, implement, sync, block, or submit-review.
+3. Delegate to the specific workflow skill for intake, graph, bootstrap, claim, plan, implement, sync, block, submit-review, PR completion, or PR rework.
 
 ## Decision rules
 
 - Start with `agentstack-backlog-language` when tracker meaning is unclear.
 - Use the normal path: intake, graph, bootstrap workspace, identity, claim, plan, implement, sync, submit-review.
+- Use `agentstack-pr-complete` only when a human explicitly approves and authorizes agent completion.
+- Use `agentstack-pr-rework` when PR review comments or requested changes send the work back for implementation.
 - In concurrent agent runs, claim only from the dedicated workspace that will do the implementation.
 - Invoke `agentstack-block` whenever safe progress is impossible.
 - Do not parse tracker-native labels or fields when an `agentstack` command can provide normalized output.

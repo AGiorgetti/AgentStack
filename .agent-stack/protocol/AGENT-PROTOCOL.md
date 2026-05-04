@@ -59,10 +59,12 @@ skills at .agents/skills
 ## Runtime workflow
 
 ```text
-load language -> intake -> graph -> bootstrap workspace -> identity -> claim -> plan -> implement -> sync -> submit-review
+load language -> intake -> graph -> bootstrap workspace -> identity -> claim -> plan -> implement -> sync -> submit-review -> human review -> complete or rework
 ```
 
 The workflow is executed through protocol skills under `.agents/skills/agentstack-*/SKILL.md`, with `.agents/skills/git-worktree-ops/SKILL.md` used for git worktree isolation.
+
+After review, use `.agents/skills/agentstack-pr-complete/SKILL.md` only when a human explicitly authorizes agent completion. Use `.agents/skills/agentstack-pr-rework/SKILL.md` when PR comments or requested changes require more implementation before review can complete.
 
 Agents must write tracker comments, execution plans, blockers, review summaries, and child work item descriptions in readable Markdown. Use `.agent-stack/templates/markdown-style.md` for repository-local formatting guidance.
 
