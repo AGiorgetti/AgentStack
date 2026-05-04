@@ -44,15 +44,6 @@ agentstack help work-item submit-review --json
 
 AgentStack skills should reference `agentstack help ... --json` for current flags, output, examples, and policy effects instead of duplicating full command manuals.
 
-## Post-review skills
-
-Review submission is not the end of every workflow. After human review:
-
-- Use `.agents/skills/agentstack-pr-complete/SKILL.md` only when a human explicitly approves the PR and authorizes the agent to merge or complete the work item.
-- Use `.agents/skills/agentstack-pr-rework/SKILL.md` when the PR has comments, requested changes, or other review notes requiring more work.
-
-These skills use current CLI primitives such as `work-item progress`, `work-item state`, `work-item block`, and `work-item submit-review`. The CLI does not currently provide a dedicated `complete` or `changes-requested` command.
-
 ## Local Agent Identity
 
 The CLI can create local, uncommitted agent identity state under:
@@ -83,6 +74,25 @@ AgentStack protocol skills live only under:
 ```
 
 The `agentstack-` prefix reduces naming collisions with other skill packages. Supporting skills may also be deployed when the protocol depends on them. `git-worktree-ops` is the supporting skill for git worktree isolation in concurrent agent workflows.
+
+Skill index:
+
+| Skill | Use |
+| --- | --- |
+| `agentstack-orchestrator` | Choose the next AgentStack workflow skill. |
+| `agentstack-tracker-intake` | Find eligible tracker-backed work. |
+| `agentstack-tracker-graph` | Inspect blockers, children, parents, and readiness. |
+| `agentstack-work-bootstrap` | Prepare an isolated worktree or workspace. |
+| `agentstack-tracker-claim` | Claim eligible work before implementation. |
+| `agentstack-work-plan` | Publish an execution plan before coding. |
+| `agentstack-work-implement` | Implement claimed scoped work with validation. |
+| `agentstack-tracker-sync` | Sync progress, state, blockers, and PR links. |
+| `agentstack-block` | Stop safely and publish a blocker. |
+| `agentstack-submit-review` | Submit completed work for human PR review. |
+| `agentstack-pr-complete` | Human approved the PR and explicitly authorized agent completion. |
+| `agentstack-pr-rework` | PR comments or requested changes require more work. |
+| `agentstack-backlog-language` | Interpret or normalize tracker language through AgentStack terms. |
+| `git-worktree-ops` | Support isolated git worktree operations. |
 
 ## Generic agent entrypoint
 
