@@ -31,7 +31,8 @@
     ".agent-stack/",
     ".agents/skills/",
     "AGENTS.md",
-    "README.md"
+    "README.md",
+    "docs/"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
