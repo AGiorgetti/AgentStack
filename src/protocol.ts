@@ -97,3 +97,16 @@ export function createClaimInfo(
     ...(options?.workspaceId ? { workspaceId: options.workspaceId } : {}),
   };
 }
+
+export function assertActiveClaimToken(item: WorkItem, claimToken: string, action: 'claim' | 'release'): void {
+  const activeToken = item.claim?.claimToken;
+  if (activeToken === claimToken) {
+    return;
+  }
+
+  if (!activeToken) {
+    throw new Error(`Cannot ${action} work item ${item.ref.id}: no active claim token found in tracker.`);
+  }
+
+  throw new Error(`Cannot ${action} work item ${item.ref.id}: active claim belongs to another token.`);
+}

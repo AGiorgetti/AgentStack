@@ -7,7 +7,7 @@ import { AzureDevOpsTrackerAdapter, type AzureDevOpsTrackerConfig } from './azur
 import { GitHubTrackerAdapter, type GitHubTrackerConfig } from './github.js';
 import { type ClaimInfo, type Platform, type ProtocolState, type WorkItem, type WorkItemKind, type WorkItemRef } from './model.js';
 import { recommendedPolicy, type ExecutionPolicy } from './policy.js';
-import { createClaimInfo, isEligibleForExecution } from './protocol.js';
+import { assertActiveClaimToken, createClaimInfo, isEligibleForExecution } from './protocol.js';
 import { canonicalProtocolStates, canonicalWorkItemTypes } from './language/canonical.js';
 import { validateBacklogLanguageFile, validateTrackerMappingFile } from './language/validation.js';
 import { findHelpNode, renderHelpJson, renderHelpText } from './help.js';
@@ -196,6 +196,8 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
       if (workspaceId) claimOptions.workspaceId = workspaceId;
       const claim = createClaimInfo(agentId, claimOptions);
       await context.tracker.claim(ref, claim);
+      const claimedItem = await context.tracker.getWorkItem(ref);
+      assertActiveClaimToken(claimedItem, claim.claimToken, 'claim');
       saveLocalClaim(context.repoRoot, ref, claim);
       appendRuntimeEvent(context.repoRoot, ref, 'claim', { agentId, claim });
       await printJson({ claimed: true, ref, claim });
@@ -206,6 +208,8 @@ async function handleWorkItemCommand(subcommand: string, rest: string[], parsed:
       const id = requireArg(rest[0], 'work item id');
       const ref = makeRef(context, id);
       const claimToken = getStringFlag(parsed, 'claim-token') ?? requireLocalClaimToken(context.repoRoot, ref);
+      const item = await context.tracker.getWorkItem(ref);
+      assertActiveClaimToken(item, claimToken, 'release');
       await context.tracker.releaseClaim(ref, claimToken);
       appendRuntimeEvent(context.repoRoot, ref, 'claim-release', { claimToken });
       await printJson({ released: true, ref, claimToken });
