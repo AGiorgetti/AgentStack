@@ -1,3 +1,5 @@
+Be concise and token-efficient. Give direct answers, minimal examples, and no extra background. For code, make the smallest safe change and summarize only changes and verification.
+
 # AgentStack CLI Repository Instructions
 
 This repository contains the source for `@agentstack/cli` and AgentStack Protocol assets.
