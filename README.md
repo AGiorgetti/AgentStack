@@ -92,9 +92,55 @@ agentstack uninstall protocol --target /path/to/product-repo
 
 ## Local Development
 
+Install dependencies and run the validation loop:
+
 ```sh
 npm install
 npm run build
 npm run typecheck
 npm test
+npm pack --dry-run
+```
+
+Expose this checkout as the global `agentstack` command without publishing:
+
+```sh
+npm install
+npm run build
+npm link
+agentstack --help
+```
+
+After changing TypeScript source, rebuild:
+
+```sh
+npm run build
+```
+
+Run the built CLI directly when testing specific changes:
+
+```sh
+node ./dist/agentstack.js --help
+node ./dist/agentstack.js help setup --json
+node ./dist/agentstack.js setup protocol --target ./tmp-agentstack-target --tracker github --github-repository OWNER/REPO --overwrite
+node ./dist/agentstack.js doctor --repo ./tmp-agentstack-target
+node ./dist/agentstack.js uninstall protocol --target ./tmp-agentstack-target --purge-runtime
+```
+
+To remove the global link:
+
+```sh
+npm unlink -g @agentstack/cli
+```
+
+To use AgentStack to develop AgentStack itself, install the protocol module into this checkout:
+
+```sh
+node ./dist/agentstack.js setup protocol --target . --tracker github --github-repository OWNER/REPO --overwrite
+node ./dist/agentstack.js doctor --repo .
+```
+
+Deployable source assets live under `assets/`, so self-install does not overwrite package source templates.
+
+For contributor and agent internals, see [Architecture](docs/architecture.md) and [Development](docs/development.md).
 ```
