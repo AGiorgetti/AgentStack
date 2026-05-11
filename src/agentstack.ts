@@ -21,6 +21,16 @@ interface ActiveTrackerFile {
   config?: string;
 }
 
+interface ModuleManifest {
+  modules?: Record<string, ModuleInstallRecord>;
+}
+
+interface ModuleInstallRecord {
+  installedAt?: string;
+  version?: string;
+  activeTracker?: string;
+}
+
 interface CliContext {
   repoRoot: string;
   activeTracker: ActiveTrackerFile;
@@ -70,7 +80,19 @@ async function main(argv: string[]): Promise<void> {
   }
 
   if (command === 'setup') {
-    runSetup(argv.slice(1));
+    if (!subcommand) throw new Error('Missing module. Use: agentstack setup protocol');
+    runModuleLifecycle('setup', argv.slice(1));
+    return;
+  }
+
+  if (command === 'uninstall') {
+    if (!subcommand) throw new Error('Missing module. Use: agentstack uninstall protocol');
+    runModuleLifecycle('uninstall', argv.slice(1));
+    return;
+  }
+
+  if (command === 'module') {
+    await handleModuleCommand(subcommand, parsed);
     return;
   }
 
@@ -82,13 +104,14 @@ async function main(argv: string[]): Promise<void> {
 
   if (command === 'language' && subcommand === 'validate') {
     const repoRoot = getRepoRoot(parsed);
-    printJson(validateBacklogLanguageFile(join(repoRoot, '.agent-stack', 'language', 'backlog-language.yaml')));
+    assertProtocolInstalled(repoRoot);
+    printJson(validateBacklogLanguageFile(join(getProtocolModuleRoot(repoRoot), 'language', 'backlog-language.yaml')));
     return;
   }
 
   if (command === 'mapping' && subcommand === 'validate') {
     const context = await loadContext(parsed);
-    const mappingFile = context.activeTracker.mapping ? resolveRepoPath(context.repoRoot, context.activeTracker.mapping) : join(context.repoRoot, '.agent-stack', 'trackers', `${context.activeTracker.tracker}.mapping.yaml`);
+    const mappingFile = context.activeTracker.mapping ? resolveRepoPath(context.repoRoot, context.activeTracker.mapping) : join(getProtocolModuleRoot(context.repoRoot), 'trackers', `${context.activeTracker.tracker}.mapping.yaml`);
     printJson(validateTrackerMappingFile(mappingFile, context.activeTracker.tracker));
     return;
   }
@@ -129,6 +152,28 @@ async function handleAgentCommand(subcommand: string | undefined, rest: string[]
     }
     default:
       throw new Error(`Unknown agent identity action: ${action}`);
+  }
+}
+
+async function handleModuleCommand(subcommand: string | undefined, parsed: ParsedArgs): Promise<void> {
+  const repoRoot = getRepoRoot(parsed);
+  const manifest = readModuleManifest(repoRoot);
+
+  switch (subcommand) {
+    case 'list':
+      await printJson({
+        modules: Object.entries(manifest.modules ?? {}).map(([id, record]) => ({ id, ...record })),
+      });
+      return;
+    case 'status': {
+      const id = parsed.positionals[2];
+      if (!id) throw new Error('Missing module id.');
+      const record = manifest.modules?.[id] ?? null;
+      await printJson({ module: id, installed: Boolean(record), record });
+      return;
+    }
+    default:
+      throw new Error(`Unknown module subcommand: ${subcommand ?? ''}`.trim());
   }
 }
 
@@ -329,13 +374,15 @@ function parseArgs(argv: string[]): ParsedArgs {
 
 async function loadContext(parsed: ParsedArgs): Promise<CliContext> {
   const repoRoot = getRepoRoot(parsed);
-  const activeTracker = readJson<ActiveTrackerFile>(join(repoRoot, '.agent-stack', 'active-tracker.json'));
+  assertProtocolInstalled(repoRoot);
+  const protocolRoot = getProtocolModuleRoot(repoRoot);
+  const activeTracker = readJson<ActiveTrackerFile>(join(protocolRoot, 'active-tracker.json'));
   const configFile = activeTracker.config
     ? resolveRepoPath(repoRoot, activeTracker.config)
-    : join(repoRoot, '.agent-stack', 'trackers', `${activeTracker.tracker}.config.json`);
+    : join(protocolRoot, 'trackers', `${activeTracker.tracker}.config.json`);
   const rawConfig = readJson<Record<string, unknown>>(configFile);
-  const policy = existsSync(join(repoRoot, '.agent-stack', 'policy', 'AGENT-POLICY.json'))
-    ? { ...recommendedPolicy, ...readJson<Partial<ExecutionPolicy>>(join(repoRoot, '.agent-stack', 'policy', 'AGENT-POLICY.json')) }
+  const policy = existsSync(join(protocolRoot, 'policy', 'AGENT-POLICY.json'))
+    ? { ...recommendedPolicy, ...readJson<Partial<ExecutionPolicy>>(join(protocolRoot, 'policy', 'AGENT-POLICY.json')) }
     : recommendedPolicy;
 
   if (activeTracker.tracker === 'github') {
@@ -367,6 +414,22 @@ async function loadContext(parsed: ParsedArgs): Promise<CliContext> {
 
 function getRepoRoot(parsed: ParsedArgs): string {
   return resolve(String(parsed.flags.repo ?? parsed.flags.cwd ?? process.cwd()));
+}
+
+function getProtocolModuleRoot(repoRoot: string): string {
+  return join(repoRoot, '.agent-stack', 'modules', 'protocol');
+}
+
+function readModuleManifest(repoRoot: string): ModuleManifest {
+  const path = join(repoRoot, '.agent-stack', 'modules.json');
+  return existsSync(path) ? readJson<ModuleManifest>(path) : { modules: {} };
+}
+
+function assertProtocolInstalled(repoRoot: string): void {
+  const manifest = readModuleManifest(repoRoot);
+  if (!manifest.modules?.protocol) {
+    throw new Error('AgentStack protocol module is not installed. Run: agentstack setup protocol ...');
+  }
 }
 
 function makeRef(context: CliContext, rawId: string): WorkItemRef {
@@ -420,7 +483,7 @@ function normalizeGitHubConfig(raw: Record<string, unknown>, configFile: string)
   if (!owner || !repo || isPlaceholder(owner) || isPlaceholder(repo)) {
     throw new Error(
       `GitHub tracker config is incomplete or still contains placeholders in ${configFile}. ` +
-      'Run: agentstack setup --tracker github --github-repository OWNER/REPO --overwrite'
+      'Run: agentstack setup protocol --tracker github --github-repository OWNER/REPO --overwrite'
     );
   }
 
@@ -437,7 +500,7 @@ function normalizeAzureDevOpsConfig(raw: Record<string, unknown>, configFile: st
   if (!organizationUrl || !project || isPlaceholder(organizationUrl) || isPlaceholder(project)) {
     throw new Error(
       `Azure DevOps tracker config is incomplete or still contains placeholders in ${configFile}. ` +
-      'Run: agentstack setup --tracker azure-devops --azdo-organization https://dev.azure.com/ORG --azdo-project PROJECT --overwrite'
+      'Run: agentstack setup protocol --tracker azure-devops --azdo-organization https://dev.azure.com/ORG --azdo-project PROJECT --overwrite'
     );
   }
 
@@ -615,17 +678,21 @@ function appendRuntimeEvent<K extends ProtocolEventKind>(
 }
 
 async function runDoctor(context: CliContext): Promise<Record<string, unknown>> {
-  const languageValidation = validateBacklogLanguageFile(join(context.repoRoot, '.agent-stack', 'language', 'backlog-language.yaml'));
+  const protocolRoot = getProtocolModuleRoot(context.repoRoot);
+  const languageValidation = validateBacklogLanguageFile(join(protocolRoot, 'language', 'backlog-language.yaml'));
   const mappingValidation = validateTrackerMappingFile(
-    context.activeTracker.mapping ? resolveRepoPath(context.repoRoot, context.activeTracker.mapping) : join(context.repoRoot, '.agent-stack', 'trackers', `${context.activeTracker.tracker}.mapping.yaml`),
+    context.activeTracker.mapping ? resolveRepoPath(context.repoRoot, context.activeTracker.mapping) : join(protocolRoot, 'trackers', `${context.activeTracker.tracker}.mapping.yaml`),
     context.activeTracker.tracker,
   );
+  const manifest = readModuleManifest(context.repoRoot);
   return {
     ok: languageValidation.ok && mappingValidation.ok,
     repoRoot: context.repoRoot,
+    modules: manifest.modules ?? {},
     activeTracker: context.activeTracker.tracker,
     files: {
       agentStack: existsSync(join(context.repoRoot, '.agent-stack')),
+      protocolModule: existsSync(protocolRoot),
       agentsMd: existsSync(join(context.repoRoot, 'AGENTS.md')),
       skills: existsSync(join(context.repoRoot, '.agents', 'skills')),
     },
@@ -634,10 +701,11 @@ async function runDoctor(context: CliContext): Promise<Record<string, unknown>> 
   };
 }
 
-function runSetup(args: string[]): void {
+function runModuleLifecycle(action: 'setup' | 'uninstall', args: string[]): void {
   const here = dirname(fileURLToPath(import.meta.url));
-  const script = resolve(here, '../.agent-stack/install/setup-agent-stack.mjs');
-  const result = spawnSync(process.execPath, [script, ...args], { stdio: 'inherit' });
+  const script = resolve(here, '../assets/install/setup-agent-stack.mjs');
+  const scriptArgs = action === 'uninstall' ? ['uninstall', ...args] : args;
+  const result = spawnSync(process.execPath, [script, ...scriptArgs], { stdio: 'inherit' });
   process.exit(result.status ?? 1);
 }
 

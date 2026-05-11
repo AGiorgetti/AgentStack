@@ -1,7 +1,7 @@
 {
   "name": "@agentstack/cli",
   "version": "0.1.1",
-  "description": "AgentStack CLI: command-line tooling for AgentStack Protocol, tracker setup, canonical backlog language, and AI-agent workflow coordination.",
+  "description": "AgentStack CLI: modular command-line tooling for AI-agent workflow modules, including AgentStack Protocol.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,8 +28,7 @@
   },
   "files": [
     "dist/",
-    ".agent-stack/",
-    ".agents/skills/",
+    "assets/",
     "AGENTS.md",
     "README.md",
     "docs/"

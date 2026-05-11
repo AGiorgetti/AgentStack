@@ -48,12 +48,12 @@ Until this exists, skills should describe git worktrees as the recommended manua
 
 ## Skill-Specific Markdown Templates
 
-The active protocol has one simple repository-customizable style guide at `.agent-stack/templates/markdown-style.md`. That is enough for now and avoids scattering formatting rules through every skill.
+The active protocol has one simple repository-customizable style guide at `.agent-stack/modules/protocol/templates/markdown-style.md`. That is enough for now and avoids scattering formatting rules through every skill.
 
 If agents need more structured guidance later, add optional skill-specific templates:
 
 ```text
-.agent-stack/templates/
+.agent-stack/modules/protocol/templates/
   progress.md
   execution-plan.md
   blocker.md

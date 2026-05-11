@@ -70,9 +70,9 @@ const repoFlag: HelpFlag = {
 
 const topLevelHelp: HelpNode = {
   name: 'agentstack',
-  summary: 'Canonical CLI for AgentStack Protocol workflow and tracker-backed execution.',
+  summary: 'Modular CLI for AgentStack workflows.',
   description:
-    'AgentStack exposes a canonical JSON interface over the active backlog tracker. Use `agentstack help <command> --json` when an agent needs the current command contract directly from the CLI.',
+    'AgentStack installs built-in modules into repositories. Use `agentstack help <command> --json` when an agent needs the current command contract directly from the CLI.',
   usage: [
     'agentstack help [command...] [--json]',
     'agentstack <command> [subcommand] [flags]',
@@ -85,13 +85,14 @@ const topLevelHelp: HelpNode = {
   subcommands: [
     {
       name: 'setup',
-      summary: 'Install AgentStack protocol assets into a repository.',
+      summary: 'Install an AgentStack module into a repository.',
       description:
-        'Creates or refreshes `.agent-stack`, `.agents/skills/agentstack-*`, and the managed AgentStack block in `AGENTS.md`. Deploys only the selected tracker profile.',
+        'Installs a built-in module. The protocol module creates `.agent-stack/modules/protocol`, `.agents/skills/agentstack-protocol-*`, and the managed AgentStack block in `AGENTS.md`.',
       usage: [
-        'agentstack setup --tracker github --github-repository OWNER/REPO [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]',
-        'agentstack setup --tracker azure-devops --azdo-organization <url> --azdo-project <project> [--azdo-team <team>] [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]',
+        'agentstack setup protocol --tracker github --github-repository OWNER/REPO [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]',
+        'agentstack setup protocol --tracker azure-devops --azdo-organization <url> --azdo-project <project> [--azdo-team <team>] [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]',
       ],
+      arguments: [{ name: '<module>', required: true, description: 'Built-in module id. Currently `protocol`.' }],
       flags: [
         { name: '--tracker', valueName: 'github|azure-devops', required: true, description: 'Tracker profile to install.' },
         { name: '--github-repository', valueName: 'OWNER/REPO', description: 'GitHub repository slug. Required for GitHub unless setup can infer origin.' },
@@ -105,11 +106,50 @@ const topLevelHelp: HelpNode = {
       ],
       examples: [
         {
-          command: 'agentstack setup --tracker github --github-repository OWNER/REPO --agents generic --provision-tracker --overwrite',
+          command: 'agentstack setup protocol --tracker github --github-repository OWNER/REPO --agents generic --provision-tracker --overwrite',
           description: 'Install the GitHub profile and provision default protocol labels.',
         },
       ],
       subcommands: [],
+    },
+    {
+      name: 'uninstall',
+      summary: 'Uninstall an AgentStack module from a repository.',
+      description:
+        'Removes module-owned assets and updates `.agent-stack/modules.json`. Shared runtime state is preserved unless `--purge-runtime` is used.',
+      usage: ['agentstack uninstall protocol [--target <repo>] [--purge-runtime]'],
+      arguments: [{ name: '<module>', required: true, description: 'Built-in module id. Currently `protocol`.' }],
+      flags: [
+        { name: '--target', valueName: '<repo>', description: 'Repository directory to update. Defaults to the current working directory.' },
+        { name: '--purge-runtime', description: 'Also remove protocol local identity and run logs when safe.' },
+      ],
+      subcommands: [],
+    },
+    {
+      name: 'module',
+      summary: 'Inspect installed AgentStack modules.',
+      description: 'Reads `.agent-stack/modules.json` and reports installed built-in modules.',
+      usage: ['agentstack module list [--repo <repo>]', 'agentstack module status <module> [--repo <repo>]'],
+      flags: [repoFlag],
+      subcommands: [
+        {
+          name: 'list',
+          summary: 'List installed modules.',
+          description: 'Returns installed modules from `.agent-stack/modules.json`.',
+          usage: ['agentstack module list [--repo <repo>]'],
+          flags: [repoFlag],
+          subcommands: [],
+        },
+        {
+          name: 'status',
+          summary: 'Show one module status.',
+          description: 'Returns whether a module is installed and its manifest record.',
+          usage: ['agentstack module status <module> [--repo <repo>]'],
+          arguments: [{ name: '<module>', required: true, description: 'Module id.' }],
+          flags: [repoFlag],
+          subcommands: [],
+        },
+      ],
     },
     {
       name: 'doctor',
@@ -137,7 +177,7 @@ const topLevelHelp: HelpNode = {
       subcommands: [
         {
           name: 'validate',
-          summary: 'Validate `.agent-stack/language/backlog-language.yaml`.',
+          summary: 'Validate `.agent-stack/modules/protocol/language/backlog-language.yaml`.',
           description:
             'Parses the language YAML, normalizes field names, and verifies required canonical concepts are present.',
           usage: ['agentstack language validate [--repo <repo>]'],
@@ -161,7 +201,7 @@ const topLevelHelp: HelpNode = {
       subcommands: [
         {
           name: 'validate',
-          summary: 'Validate the active `.agent-stack/trackers/<tracker>.mapping.yaml`.',
+          summary: 'Validate the active `.agent-stack/modules/protocol/trackers/<tracker>.mapping.yaml`.',
           description:
             'Parses the mapping YAML, normalizes field names, and verifies canonical type, state, relation, and readiness mappings.',
           usage: ['agentstack mapping validate [--repo <repo>]'],
