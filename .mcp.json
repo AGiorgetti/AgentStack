@@ -1,0 +1,11 @@
+{
+	"mcpServers": {
+		"tokensave": {
+			"args": [
+				"serve"
+			],
+			"command": "tokensave.exe",
+			"type": "stdio"
+		}
+	}
+}

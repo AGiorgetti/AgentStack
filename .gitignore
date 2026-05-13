@@ -419,3 +419,4 @@ FodyWeavers.xsd
 
 # TypeScript Compitation Output
 dist/
+.tokensave
