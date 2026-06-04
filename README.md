@@ -12,6 +12,7 @@ The first built-in module is `protocol`: a tracker-backed collaboration protocol
 | [Command Reference](docs/commands.md) | Global command syntax. |
 | [Modules](docs/modules.md) | Built-in module registry and contract. |
 | [Protocol Module](docs/modules/protocol/README.md) | Protocol commands, usage, assets, and architecture. |
+| [Rules Module](docs/modules/rules/README.md) | Repository rules module. |
 
 The CLI help is the source of truth:
 

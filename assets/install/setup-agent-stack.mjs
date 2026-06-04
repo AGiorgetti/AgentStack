@@ -4,11 +4,13 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const moduleId = 'protocol';
+const supportedModules = new Set(['protocol', 'rules']);
 const supportedTrackers = new Set(['github', 'azure-devops']);
 const supportedAgents = new Set(['generic', 'claude', 'copilot', 'gemini']);
-const managedStart = '<!-- agentstack-protocol:start -->';
-const managedEnd = '<!-- agentstack-protocol:end -->';
+const protocolManagedStart = '<!-- agentstack-protocol:start -->';
+const protocolManagedEnd = '<!-- agentstack-protocol:end -->';
+const rulesManagedStart = '<!-- as:rules -->';
+const rulesManagedEnd = '<!-- /as:rules -->';
 const isWindows = process.platform === 'win32';
 const skillMap = new Map([
   ['agentstack-backlog-language', 'agentstack-protocol-backlog-language'],
@@ -30,18 +32,22 @@ function usage() {
   console.log(`Usage:
   agentstack setup protocol --tracker github --github-repository OWNER/REPO [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]
   agentstack setup protocol --tracker azure-devops --azdo-organization <url> --azdo-project <project> [--azdo-team <team>] [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]
+  agentstack setup rules [--target <repo>]
   agentstack uninstall protocol [--target <repo>] [--purge-runtime]
+  agentstack uninstall rules [--target <repo>]
 
 Examples:
   agentstack setup protocol --tracker github --github-repository octo/widgets --provision-tracker
+  agentstack setup rules --target /path/to/product-repo
   agentstack uninstall protocol --target /path/to/product-repo
+  agentstack uninstall rules --target /path/to/product-repo
 `);
 }
 
 function parseArgs(argv, action) {
   const selectedModule = argv[0];
-  if (!selectedModule) throw new Error(`Missing module. Use: agentstack ${action} protocol`);
-  if (selectedModule !== moduleId) throw new Error(`Unsupported module: ${selectedModule}`);
+  if (!selectedModule) throw new Error(`Missing module. Use: agentstack ${action} <module>`);
+  if (!supportedModules.has(selectedModule)) throw new Error(`Unsupported module: ${selectedModule}`);
 
   const args = { module: selectedModule, agents: ['generic'], overwrite: false, provisionTracker: false, purgeRuntime: false, target: process.cwd() };
   for (let i = 1; i < argv.length; i += 1) {
@@ -104,6 +110,13 @@ function parseArgs(argv, action) {
         throw new Error(`Unknown argument: ${arg}`);
     }
   }
+  if (args.module === 'rules') {
+    if (args.overwrite) throw new Error('The rules module always refreshes its managed block; --overwrite is not supported.');
+    const unsupported = argv.find((value) => value.startsWith('--') && !['--target', '--repo', '--help', '-h'].includes(value));
+    if (unsupported) throw new Error(`Unknown argument for rules module: ${unsupported}`);
+    if (action === 'uninstall') return args;
+    return args;
+  }
   if (action === 'uninstall') return args;
   if (!args.tracker) throw new Error('Missing --tracker');
   if (!supportedTrackers.has(args.tracker)) throw new Error(`Unsupported tracker: ${args.tracker}`);
@@ -118,6 +131,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(here, '../..');
 const sourceRoot = join(packageRoot, 'assets', 'root');
 const sourceProtocolStack = join(packageRoot, 'assets', 'modules', 'protocol');
+const sourceRules = join(packageRoot, 'assets', 'modules', 'rules', 'rules.md');
 const sourceSkills = join(sourceProtocolStack, 'skills');
 const rawArgs = process.argv.slice(2);
 const action = rawArgs[0] === 'uninstall' ? 'uninstall' : 'setup';
@@ -157,22 +171,37 @@ function readJson(dest, fallback) {
   return existsSync(dest) ? JSON.parse(readFileSync(dest, 'utf8')) : fallback;
 }
 
-function mergeAgentsMd(dest, managedBlock) {
-  const block = `${managedStart}\n${managedBlock.trim()}\n${managedEnd}`;
+function findManagedBlock(existing, startMarker, endMarker, strict = false) {
+  const starts = existing.split(startMarker).length - 1;
+  const ends = existing.split(endMarker).length - 1;
+  if (starts === 0 && ends === 0) return undefined;
+  const start = existing.indexOf(startMarker);
+  const end = existing.indexOf(endMarker);
+  if (starts !== 1 || ends !== 1 || end < start) {
+    if (!strict) return start >= 0 && end > start ? { start, end: end + endMarker.length } : undefined;
+    if (starts !== 1 || ends !== 1) throw new Error(`Malformed managed block: expected one ${startMarker} and one ${endMarker}.`);
+    throw new Error(`Malformed managed block: ${endMarker} appears before ${startMarker}.`);
+  }
+  return { start, end: end + endMarker.length };
+}
+
+function mergeAgentsMd(dest, managedBlock, startMarker = protocolManagedStart, endMarker = protocolManagedEnd, position = 'end') {
+  const block = `${startMarker}\n${managedBlock.trim()}\n${endMarker}`;
   if (!existsSync(dest)) {
-    writeFileSync(dest, `# Repository Agent Instructions\n\n${block}\n`, 'utf8');
+    const content = position === 'start' ? `${block}\n` : `# Repository Agent Instructions\n\n${block}\n`;
+    writeFileSync(dest, content, 'utf8');
     return;
   }
   const existing = readFileSync(dest, 'utf8');
-  const start = existing.indexOf(managedStart);
-  const end = existing.indexOf(managedEnd);
-  if (start >= 0 && end > start) {
-    const before = existing.slice(0, start).trimEnd();
-    const after = existing.slice(end + managedEnd.length).trimStart();
-    writeFileSync(dest, `${before}\n\n${block}\n${after ? `\n${after}` : ''}`, 'utf8');
-    return;
-  }
-  writeFileSync(dest, `${existing.trimEnd()}\n\n${block}\n`, 'utf8');
+  const range = findManagedBlock(existing, startMarker, endMarker, startMarker === rulesManagedStart);
+  const before = range ? existing.slice(0, range.start).trimEnd() : '';
+  const after = range ? existing.slice(range.end).trimStart() : existing;
+  const withoutBlock = `${before}${before && after ? '\n\n' : ''}${after}`;
+  const remaining = withoutBlock.trim();
+  const content = position === 'start'
+    ? `${block}${remaining ? `\n\n${remaining}` : ''}\n`
+    : `${remaining}${remaining ? '\n\n' : ''}${block}\n`;
+  writeFileSync(dest, content, 'utf8');
 }
 
 function parseGitHubRepository(value) {
@@ -396,32 +425,32 @@ function modulesManifestPath() {
   return join(targetStack, 'modules.json');
 }
 
-function writeInstalledModule(tracker) {
+function writeInstalledModule(id, extra = {}) {
   const manifest = readJson(modulesManifestPath(), { modules: {} });
   manifest.modules ??= {};
-  manifest.modules[moduleId] = {
+  manifest.modules[id] = {
     installedAt: new Date().toISOString(),
     version: '0.1.1',
-    activeTracker: tracker
+    ...extra
   };
   writeJsonForce(modulesManifestPath(), manifest);
 }
 
-function removeInstalledModule() {
+function removeInstalledModule(id) {
   const manifest = readJson(modulesManifestPath(), { modules: {} });
-  if (manifest.modules) delete manifest.modules[moduleId];
+  if (manifest.modules) delete manifest.modules[id];
   writeJsonForce(modulesManifestPath(), manifest);
 }
 
-function removeAgentsMdBlock(dest) {
+function removeAgentsMdBlock(dest, startMarker = protocolManagedStart, endMarker = protocolManagedEnd) {
   if (!existsSync(dest)) return;
   const existing = readFileSync(dest, 'utf8');
-  const start = existing.indexOf(managedStart);
-  const end = existing.indexOf(managedEnd);
-  if (start < 0 || end <= start) return;
-  const before = existing.slice(0, start).trimEnd();
-  const after = existing.slice(end + managedEnd.length).trimStart();
-  writeFileSync(dest, `${before}${before && after ? '\n\n' : ''}${after ? `${after}\n` : before ? '\n' : ''}`, 'utf8');
+  const range = findManagedBlock(existing, startMarker, endMarker, startMarker === rulesManagedStart);
+  if (!range) return;
+  const before = existing.slice(0, range.start).trimEnd();
+  const after = existing.slice(range.end).trimStart();
+  const remaining = `${before}${before && after ? '\n\n' : ''}${after}`.trimEnd();
+  writeFileSync(dest, remaining ? `${remaining}\n` : '', 'utf8');
 }
 
 function uninstallProtocol() {
@@ -435,12 +464,33 @@ function uninstallProtocol() {
     rmSync(join(targetStack, 'local'), { recursive: true, force: true });
     rmSync(join(targetStack, 'runs'), { recursive: true, force: true });
   }
-  removeInstalledModule();
+  removeInstalledModule('protocol');
   console.log(`AgentStack Protocol uninstalled from ${targetRoot}`);
 }
 
+function setupRules() {
+  const rules = readFileSync(sourceRules, 'utf8');
+  const agentsMd = join(targetRoot, 'AGENTS.md');
+  mergeAgentsMd(agentsMd, rules, rulesManagedStart, rulesManagedEnd, 'start');
+  writeInstalledModule('rules');
+  console.log(`AgentStack Rules installed into ${targetRoot}`);
+}
+
+function uninstallRules() {
+  const agentsMd = join(targetRoot, 'AGENTS.md');
+  removeAgentsMdBlock(agentsMd, rulesManagedStart, rulesManagedEnd);
+  removeInstalledModule('rules');
+  console.log(`AgentStack Rules uninstalled from ${targetRoot}`);
+}
+
 if (action === 'uninstall') {
-  uninstallProtocol();
+  if (args.module === 'rules') uninstallRules();
+  else uninstallProtocol();
+  process.exit(0);
+}
+
+if (args.module === 'rules') {
+  setupRules();
   process.exit(0);
 }
 
@@ -466,7 +516,7 @@ const trackerConfig = buildTrackerConfig();
 copyFileOrDir(join(sourceProtocolStack, 'trackers', `${args.tracker}.mapping.yaml`), join(targetProtocolStack, 'trackers', `${args.tracker}.mapping.yaml`));
 writeJson(join(targetProtocolStack, 'trackers', `${args.tracker}.config.json`), trackerConfig);
 writeJson(join(targetProtocolStack, 'active-tracker.json'), activeTrackerFile());
-writeInstalledModule(args.tracker);
+writeInstalledModule('protocol', { activeTracker: args.tracker });
 
 mergeAgentsMd(join(targetRoot, 'AGENTS.md'), `## AgentStack Protocol Instructions
 

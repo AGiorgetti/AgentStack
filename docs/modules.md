@@ -7,6 +7,7 @@ AgentStack modules are built-in packages of CLI commands, repository assets, ski
 | Module | Status | Purpose |
 | --- | --- | --- |
 | `protocol` | implemented | Installs AgentStack Protocol assets and activates tracker-backed autonomous work commands. |
+| `rules` | implemented | Installs AgentStack's built-in rules template into a managed block at the top of root `AGENTS.md`. |
 
 ## Module Contract
 

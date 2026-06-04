@@ -9,3 +9,4 @@ AgentStack is a modular CLI. The host CLI owns module lifecycle, help routing, a
 | [Modules](modules.md) | Built-in module contract and registry. |
 | [Development](development.md) | Contributor workflow and validation. |
 | [Protocol Module](modules/protocol/README.md) | Tracker-backed autonomous workflow module. |
+| [Rules Module](modules/rules/README.md) | Repository rules module. |

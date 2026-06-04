@@ -1,4 +1,3 @@
-<!-- as:rules -->
 Be concise and token-efficient. Give direct answers, minimal examples, and no extra background. For code, make the smallest safe change and summarize only changes and verification. On multi-step tasks include brief one-line checkpoint summaries after significant steps (keep them minimal).
 
 These rules apply to every task in this project unless explicitly overridden.
@@ -61,30 +60,3 @@ If you genuinely think a convention is harmful, surface it. Don't fork silently.
 "Completed" is wrong if anything was skipped silently.
 "Tests pass" is wrong if any were skipped.
 Default to surfacing uncertainty, not hiding it.
-<!-- /as:rules -->
-
-# AgentStack CLI Repository Instructions
-
-This repository contains the source for `@agentstack/cli` and built-in AgentStack module assets.
-
-For tracker-backed work, agents must use the `agentstack` CLI as the canonical interface instead of parsing GitHub or Azure DevOps directly.
-
-Important source locations:
-
-- `assets/modules/protocol/` deployable protocol asset source
-- `assets/modules/protocol/skills/` deployable protocol skill source
-- `assets/install/setup-agent-stack.mjs` setup/uninstall implementation
-- `assets/root/agent-stack.gitignore` deployed `.agent-stack/.gitignore`
-
-Installed target locations:
-
-- `.agent-stack/modules/protocol/README.md`
-- `.agent-stack/modules/protocol/protocol/AGENT-PROTOCOL.md`
-- `.agent-stack/modules/protocol/language/backlog-language.yaml`
-- `.agent-stack/modules/protocol/policy/AGENT-POLICY.json`
-- `.agents/skills/agentstack-protocol-*/SKILL.md`
-- `.agents/skills/git-worktree-ops/SKILL.md`
-
-Skills live only under `.agents/skills`. Installed AgentStack protocol skills start with `agentstack-protocol-`; `git-worktree-ops` is the supporting skill for isolated git worktree operations.
-
-The setup and uninstall processes must preserve existing repository instructions by updating only AgentStack-managed blocks in `AGENTS.md`, not by replacing the whole file.

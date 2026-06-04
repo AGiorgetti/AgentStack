@@ -80,13 +80,13 @@ async function main(argv: string[]): Promise<void> {
   }
 
   if (command === 'setup') {
-    if (!subcommand) throw new Error('Missing module. Use: agentstack setup protocol');
+    if (!subcommand) throw new Error('Missing module. Use: agentstack setup <module>');
     runModuleLifecycle('setup', argv.slice(1));
     return;
   }
 
   if (command === 'uninstall') {
-    if (!subcommand) throw new Error('Missing module. Use: agentstack uninstall protocol');
+    if (!subcommand) throw new Error('Missing module. Use: agentstack uninstall <module>');
     runModuleLifecycle('uninstall', argv.slice(1));
     return;
   }

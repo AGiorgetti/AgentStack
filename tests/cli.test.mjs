@@ -59,3 +59,12 @@ test('renderHelpText returns structured human help for work-item submit-review',
   assert.match(text, /review submission report/);
   assert.match(text, /Policy:/);
 });
+
+test('structured lifecycle help includes the rules module', () => {
+  const setup = renderHelpJson(['setup']);
+  const uninstall = renderHelpJson(['uninstall']);
+
+  assert.ok(setup.usage.includes('agentstack setup rules [--target <repo>]'));
+  assert.equal(setup.usage.some((entry) => entry.includes('setup rules') && entry.includes('--overwrite')), false);
+  assert.ok(uninstall.usage.includes('agentstack uninstall rules [--target <repo>]'));
+});

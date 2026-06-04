@@ -11,6 +11,8 @@ AgentStack is modular:
 
 The first built-in module is `protocol`, which installs tracker-backed autonomous work commands.
 
+The `rules` module installs AgentStack's built-in rules template into a managed block at the top of root `AGENTS.md`.
+
 ## Install The Protocol Module
 
 GitHub:
@@ -94,3 +96,12 @@ agentstack work-item submit-review 123 --pr https://github.com/OWNER/REPO/pull/4
 ```
 
 For the full protocol workflow, including policy, worktrees, blockers, review outcomes, smoke tests, and troubleshooting, see [Protocol Usage](modules/protocol/usage.md).
+
+## Install The Rules Module
+
+```sh
+agentstack setup rules \
+  --target /path/to/product-repo
+```
+
+Setup injects the built-in rules template at the top of root `AGENTS.md`. See [Rules Usage](modules/rules/usage.md) for the lifecycle.

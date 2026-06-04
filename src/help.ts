@@ -87,12 +87,13 @@ const topLevelHelp: HelpNode = {
       name: 'setup',
       summary: 'Install an AgentStack module into a repository.',
       description:
-        'Installs a built-in module. The protocol module creates `.agent-stack/modules/protocol`, `.agents/skills/agentstack-protocol-*`, and the managed AgentStack block in `AGENTS.md`.',
+        'Installs a built-in module. Modules own their manifest entry and managed repository content.',
       usage: [
         'agentstack setup protocol --tracker github --github-repository OWNER/REPO [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]',
         'agentstack setup protocol --tracker azure-devops --azdo-organization <url> --azdo-project <project> [--azdo-team <team>] [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]',
+        'agentstack setup rules [--target <repo>]',
       ],
-      arguments: [{ name: '<module>', required: true, description: 'Built-in module id. Currently `protocol`.' }],
+      arguments: [{ name: '<module>', required: true, description: 'Built-in module id: `protocol` or `rules`.' }],
       flags: [
         { name: '--tracker', valueName: 'github|azure-devops', required: true, description: 'Tracker profile to install.' },
         { name: '--github-repository', valueName: 'OWNER/REPO', description: 'GitHub repository slug. Required for GitHub unless setup can infer origin.' },
@@ -117,8 +118,8 @@ const topLevelHelp: HelpNode = {
       summary: 'Uninstall an AgentStack module from a repository.',
       description:
         'Removes module-owned assets and updates `.agent-stack/modules.json`. Shared runtime state is preserved unless `--purge-runtime` is used.',
-      usage: ['agentstack uninstall protocol [--target <repo>] [--purge-runtime]'],
-      arguments: [{ name: '<module>', required: true, description: 'Built-in module id. Currently `protocol`.' }],
+      usage: ['agentstack uninstall protocol [--target <repo>] [--purge-runtime]', 'agentstack uninstall rules [--target <repo>]'],
+      arguments: [{ name: '<module>', required: true, description: 'Built-in module id: `protocol` or `rules`.' }],
       flags: [
         { name: '--target', valueName: '<repo>', description: 'Repository directory to update. Defaults to the current working directory.' },
         { name: '--purge-runtime', description: 'Also remove protocol local identity and run logs when safe.' },

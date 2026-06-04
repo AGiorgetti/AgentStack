@@ -35,6 +35,8 @@ Installs a built-in module into a repository.
 agentstack setup protocol --tracker github --github-repository OWNER/REPO [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]
 
 agentstack setup protocol --tracker azure-devops --azdo-organization <url> --azdo-project <project> [--azdo-team <team>] [--target <repo>] [--agents generic,claude,copilot,gemini] [--overwrite] [--provision-tracker]
+
+agentstack setup rules [--target <repo>]
 ```
 
 Bare `agentstack setup` is invalid. Always name the module:
@@ -68,12 +70,19 @@ For the `protocol` module, setup installs:
 
 Setup copies from package source assets under `assets/`, not from installed target paths. This allows AgentStack to install the protocol module into the AgentStack source repository itself.
 
+For the `rules` module, setup:
+
+- inject its contents into a dedicated managed block at the absolute top of root `AGENTS.md`;
+- preserve all content outside the rules managed block;
+- update the `rules` entry in `.agent-stack/modules.json`.
+
 ### `agentstack uninstall <module>`
 
 Uninstalls a built-in module from a repository.
 
 ```sh
 agentstack uninstall protocol [--target <repo>] [--purge-runtime]
+agentstack uninstall rules [--target <repo>]
 ```
 
 Default protocol uninstall removes:
@@ -91,6 +100,8 @@ Default uninstall preserves:
 - shared skills such as `git-worktree-ops`
 
 Use `--purge-runtime` only when local identity and run logs can be removed.
+
+Rules uninstall will remove the `rules` manifest entry and only the rules managed block from `AGENTS.md`.
 
 ### `agentstack module list`
 
