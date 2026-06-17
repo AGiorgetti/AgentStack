@@ -1,8 +1,9 @@
 <!-- as:rules -->
-Be concise and token-efficient. Give direct answers, minimal examples, and no extra background. For code, make the smallest safe change and summarize only changes and verification. On multi-step tasks include brief one-line checkpoint summaries after significant steps (keep them minimal).
+Be concise and token-efficient. Give direct answers, minimal examples, and no extra background.
+No sycophantic openers or closing fluff. No emojis or em-dashes.
 
 These rules apply to every task in this project unless explicitly overridden.
-Bias: treat tasks that touch shared utilities, public APIs, or tests as non-trivial; treat isolated, single-file, purely additive changes as trivial.
+Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
 
 ## Rule 1 — Think Before Coding
 State assumptions explicitly. If uncertain, ask rather than guess.

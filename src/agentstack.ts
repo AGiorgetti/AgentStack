@@ -1,22 +1,22 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, appendFileSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { spawnSync } from 'node:child_process';
 import { AzureDevOpsTrackerAdapter, type AzureDevOpsTrackerConfig } from './azure-devops.js';
+import type { ProtocolEvent, ProtocolEventKind, ProtocolEventPayload } from './events.js';
 import { GitHubTrackerAdapter, type GitHubTrackerConfig } from './github.js';
+import { findHelpNode, renderHelpJson, renderHelpText } from './help.js';
+import { canonicalProtocolStates, canonicalWorkItemTypes } from './language/canonical.js';
+import { validateBacklogLanguageFile, validateTrackerMappingFile } from './language/validation.js';
+import { ensureMarkdownSection, normalizeMarkdown } from './markdown.js';
 import { type ClaimInfo, type Platform, type ProtocolState, type WorkItem, type WorkItemKind, type WorkItemRef } from './model.js';
 import { recommendedPolicy, type ExecutionPolicy } from './policy.js';
 import { assertActiveClaimToken, createClaimInfo, isEligibleForExecution } from './protocol.js';
-import { canonicalProtocolStates, canonicalWorkItemTypes } from './language/canonical.js';
-import { validateBacklogLanguageFile, validateTrackerMappingFile } from './language/validation.js';
-import { findHelpNode, renderHelpJson, renderHelpText } from './help.js';
-import { ensureMarkdownSection, normalizeMarkdown } from './markdown.js';
-import type { ProtocolEvent, ProtocolEventKind, ProtocolEventPayload } from './events.js';
 import type { TrackerAdapter } from './tracker.js';
 
 interface ActiveTrackerFile {
-  tracker: 'github' | 'azure-devops' | string;
+  tracker: string;
   mapping?: string;
   config?: string;
 }
@@ -62,6 +62,10 @@ const workItemKinds = new Set<string>(canonicalWorkItemTypes);
 
 async function main(argv: string[]): Promise<void> {
   const parsed = parseArgs(argv);
+  await runMainCommands(parsed, argv);
+}
+
+async function runMainCommands(parsed: ParsedArgs, argv: string[]): Promise<void> {
   const [command, subcommand, ...rest] = parsed.positionals;
 
   if (!command) {
@@ -74,20 +78,24 @@ async function main(argv: string[]): Promise<void> {
     return;
   }
 
+  if (command === 'version') {
+    const pkg = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8'));
+    console.log(pkg.version);
+    return;
+  }
+
   if (parsed.flags.help || parsed.flags.h) {
     printHelp(parsed.positionals, parsed);
     return;
   }
 
   if (command === 'setup') {
-    if (!subcommand) throw new Error('Missing module. Use: agentstack setup <module>');
-    runModuleLifecycle('setup', argv.slice(1));
+    await handleSetupCommand(subcommand, argv);
     return;
   }
 
   if (command === 'uninstall') {
-    if (!subcommand) throw new Error('Missing module. Use: agentstack uninstall <module>');
-    runModuleLifecycle('uninstall', argv.slice(1));
+    await handleUninstallCommand(subcommand, argv);
     return;
   }
 
@@ -97,22 +105,17 @@ async function main(argv: string[]): Promise<void> {
   }
 
   if (command === 'doctor') {
-    const context = await loadContext(parsed);
-    await printJson(await runDoctor(context));
+    await handleDoctorCommand(parsed);
     return;
   }
 
   if (command === 'language' && subcommand === 'validate') {
-    const repoRoot = getRepoRoot(parsed);
-    assertProtocolInstalled(repoRoot);
-    printJson(validateBacklogLanguageFile(join(getProtocolModuleRoot(repoRoot), 'language', 'backlog-language.yaml')));
+    await handleLanguageValidate(parsed);
     return;
   }
 
   if (command === 'mapping' && subcommand === 'validate') {
-    const context = await loadContext(parsed);
-    const mappingFile = context.activeTracker.mapping ? resolveRepoPath(context.repoRoot, context.activeTracker.mapping) : join(getProtocolModuleRoot(context.repoRoot), 'trackers', `${context.activeTracker.tracker}.mapping.yaml`);
-    printJson(validateTrackerMappingFile(mappingFile, context.activeTracker.tracker));
+    await handleMappingValidate(parsed);
     return;
   }
 
@@ -129,7 +132,34 @@ async function main(argv: string[]): Promise<void> {
     throw new Error('Missing work-item subcommand.');
   }
 
-  await handleWorkItemCommand(subcommand, rest, parsed);
+  await runWorkItemCommand(subcommand, rest, parsed);
+}
+
+async function handleSetupCommand(subcommand: string | undefined, argv: string[]): Promise<void> {
+  if (!subcommand) throw new Error('Missing module. Use: agentstack setup <module>');
+  runModuleLifecycle('setup', argv.slice(1));
+}
+
+async function handleUninstallCommand(subcommand: string | undefined, argv: string[]): Promise<void> {
+  if (!subcommand) throw new Error('Missing module. Use: agentstack uninstall <module>');
+  runModuleLifecycle('uninstall', argv.slice(1));
+}
+
+async function handleDoctorCommand(parsed: ParsedArgs): Promise<void> {
+  const context = await loadContext(parsed);
+  await printJson(await runDoctor(context));
+}
+
+async function handleLanguageValidate(parsed: ParsedArgs): Promise<void> {
+  const repoRoot = getRepoRoot(parsed);
+  assertProtocolInstalled(repoRoot);
+  printJson(validateBacklogLanguageFile(join(getProtocolModuleRoot(repoRoot), 'language', 'backlog-language.yaml')));
+}
+
+async function handleMappingValidate(parsed: ParsedArgs): Promise<void> {
+  const context = await loadContext(parsed);
+  const mappingFile = context.activeTracker.mapping ? resolveRepoPath(context.repoRoot, context.activeTracker.mapping) : join(getProtocolModuleRoot(context.repoRoot), 'trackers', `${context.activeTracker.tracker}.mapping.yaml`);
+  printJson(validateTrackerMappingFile(mappingFile, context.activeTracker.tracker));
 }
 
 async function handleAgentCommand(subcommand: string | undefined, rest: string[], parsed: ParsedArgs): Promise<void> {
@@ -155,11 +185,90 @@ async function handleAgentCommand(subcommand: string | undefined, rest: string[]
   }
 }
 
+async function runGet(context: CliContext, rest: string[]): Promise<void> {
+  const id = requireArg(rest[0], 'work item id');
+  const item = await context.tracker.getWorkItem(makeRef(context, id));
+  await printJson({ item });
+}
+
+async function runIntake(context: CliContext, parsed: ParsedArgs): Promise<void> {
+  const limit = parsePositiveInteger(getStringFlag(parsed, 'limit') ?? '10', '--limit');
+  const assignedAgent = getStringFlag(parsed, 'agent');
+  const refs = await context.tracker.queryEligibleWork(assignedAgent ? { assignedAgent } : undefined);
+  await printJson({ items: refs.slice(0, limit) });
+}
+
+async function runGraph(context: CliContext, rest: string[]): Promise<void> {
+  const id = requireArg(rest[0], 'work item id');
+  const ref = makeRef(context, id);
+  const item = await context.tracker.getWorkItem(ref);
+  const dependencies = await context.tracker.getDependencyStatus(ref);
+  const eligibility = isEligibleForExecution(item, {
+    blockedByOpen: dependencies.blockedByOpen,
+    activeClaimExists: Boolean(item.claim),
+    requireAcceptanceCriteria: context.policy.requireAcceptanceCriteria,
+  });
+  await printJson({
+    root: item.ref,
+    parent: item.relations.find((relation) => relation.type === 'parent')?.target ?? null,
+    children: item.relations.filter((relation) => relation.type === 'child').map((relation) => relation.target),
+    blockedBy: item.relations.filter((relation) => relation.type === 'blocked-by').map((relation) => relation.target),
+    blocks: item.relations.filter((relation) => relation.type === 'blocks').map((relation) => relation.target),
+    dependencyStatus: dependencies,
+    canStart: eligibility.ok,
+    reasons: eligibility.ok ? [] : eligibility.reasons,
+  });
+}
+
+async function runClaim(context: CliContext, parsed: ParsedArgs, rest: string[]): Promise<void> {
+  const id = requireArg(rest[0], 'work item id');
+  const agentId = getStringFlag(parsed, 'agent') ?? ensureAgentIdentity(context.repoRoot, parsed).agentId;
+  const ref = makeRef(context, id);
+  const item = await context.tracker.getWorkItem(ref);
+  const dependencies = await context.tracker.getDependencyStatus(ref);
+  const eligibility = isEligibleForExecution(item, {
+    blockedByOpen: dependencies.blockedByOpen,
+    activeClaimExists: Boolean(item.claim),
+    requireAcceptanceCriteria: context.policy.requireAcceptanceCriteria,
+  });
+  if (!eligibility.ok && !parsed.flags.force) {
+    throw new Error(`Work item is not eligible for claim: ${eligibility.reasons.join('; ')}`);
+  }
+  const claimOptions: { branchName?: string; workspaceId?: string } = {};
+  const branchName = getStringFlag(parsed, 'branch');
+  const workspaceId = getStringFlag(parsed, 'workspace');
+  if (branchName) claimOptions.branchName = branchName;
+  if (workspaceId) claimOptions.workspaceId = workspaceId;
+  const claim = createClaimInfo(agentId, claimOptions);
+  await context.tracker.claim(ref, claim);
+  const claimedItem = await context.tracker.getWorkItem(ref);
+  assertActiveClaimToken(claimedItem, claim.claimToken, 'claim');
+  saveLocalClaim(context.repoRoot, ref, claim);
+  appendRuntimeEvent(context.repoRoot, ref, 'claim', { agentId, claim });
+  await printJson({ claimed: true, ref, claim });
+}
+
+async function runRelease(context: CliContext, parsed: ParsedArgs, rest: string[]): Promise<void> {
+  const id = requireArg(rest[0], 'work item id');
+  const ref = makeRef(context, id);
+  const claimToken = getStringFlag(parsed, 'claim-token') ?? requireLocalClaimToken(context.repoRoot, ref);
+  const item = await context.tracker.getWorkItem(ref);
+  assertActiveClaimToken(item, claimToken, 'release');
+  await context.tracker.releaseClaim(ref, claimToken);
+  appendRuntimeEvent(context.repoRoot, ref, 'claim-release', { claimToken });
+  await printJson({ released: true, ref, claimToken });
+}
+
 async function handleModuleCommand(subcommand: string | undefined, parsed: ParsedArgs): Promise<void> {
   const repoRoot = getRepoRoot(parsed);
   const manifest = readModuleManifest(repoRoot);
 
   switch (subcommand) {
+    case 'available': {
+      const available = getAvailableModules(repoRoot);
+      await printJson({ available });
+      return;
+    }
     case 'list':
       await printJson({
         modules: Object.entries(manifest.modules ?? {}).map(([id, record]) => ({ id, ...record })),
@@ -178,88 +287,30 @@ async function handleModuleCommand(subcommand: string | undefined, parsed: Parse
 }
 
 async function handleWorkItemCommand(subcommand: string, rest: string[], parsed: ParsedArgs): Promise<void> {
+  await runWorkItemCommand(subcommand, rest, parsed);
+}
+
+async function runWorkItemCommand(subcommand: string, rest: string[], parsed: ParsedArgs): Promise<void> {
   const context = await loadContext(parsed);
 
   switch (subcommand) {
-    case 'get': {
-      const id = requireArg(rest[0], 'work item id');
-      const item = await context.tracker.getWorkItem(makeRef(context, id));
-      await printJson({ item });
+    case 'get':
+      await runGet(context, rest);
       return;
-    }
-
-    case 'intake': {
-      const limit = parsePositiveInteger(getStringFlag(parsed, 'limit') ?? '10', '--limit');
-      const assignedAgent = getStringFlag(parsed, 'agent');
-      const refs = await context.tracker.queryEligibleWork(assignedAgent ? { assignedAgent } : undefined);
-      await printJson({ items: refs.slice(0, limit) });
+    case 'intake':
+      await runIntake(context, parsed);
       return;
-    }
-
-    case 'graph': {
-      const id = requireArg(rest[0], 'work item id');
-      const ref = makeRef(context, id);
-      const item = await context.tracker.getWorkItem(ref);
-      const dependencies = await context.tracker.getDependencyStatus(ref);
-      const eligibility = isEligibleForExecution(item, {
-        blockedByOpen: dependencies.blockedByOpen,
-        activeClaimExists: Boolean(item.claim),
-        requireAcceptanceCriteria: context.policy.requireAcceptanceCriteria,
-      });
-      await printJson({
-        root: item.ref,
-        parent: item.relations.find((relation) => relation.type === 'parent')?.target ?? null,
-        children: item.relations.filter((relation) => relation.type === 'child').map((relation) => relation.target),
-        blockedBy: item.relations.filter((relation) => relation.type === 'blocked-by').map((relation) => relation.target),
-        blocks: item.relations.filter((relation) => relation.type === 'blocks').map((relation) => relation.target),
-        dependencyStatus: dependencies,
-        canStart: eligibility.ok,
-        reasons: eligibility.ok ? [] : eligibility.reasons,
-      });
+    case 'graph':
+      await runGraph(context, rest);
       return;
-    }
 
-    case 'claim': {
-      const id = requireArg(rest[0], 'work item id');
-      const agentId = getStringFlag(parsed, 'agent') ?? ensureAgentIdentity(context.repoRoot, parsed).agentId;
-      const ref = makeRef(context, id);
-      const item = await context.tracker.getWorkItem(ref);
-      const dependencies = await context.tracker.getDependencyStatus(ref);
-      const eligibility = isEligibleForExecution(item, {
-        blockedByOpen: dependencies.blockedByOpen,
-        activeClaimExists: Boolean(item.claim),
-        requireAcceptanceCriteria: context.policy.requireAcceptanceCriteria,
-      });
-      if (!eligibility.ok && !parsed.flags.force) {
-        throw new Error(`Work item is not eligible for claim: ${eligibility.reasons.join('; ')}`);
-      }
-
-      const claimOptions: { branchName?: string; workspaceId?: string } = {};
-      const branchName = getStringFlag(parsed, 'branch');
-      const workspaceId = getStringFlag(parsed, 'workspace');
-      if (branchName) claimOptions.branchName = branchName;
-      if (workspaceId) claimOptions.workspaceId = workspaceId;
-      const claim = createClaimInfo(agentId, claimOptions);
-      await context.tracker.claim(ref, claim);
-      const claimedItem = await context.tracker.getWorkItem(ref);
-      assertActiveClaimToken(claimedItem, claim.claimToken, 'claim');
-      saveLocalClaim(context.repoRoot, ref, claim);
-      appendRuntimeEvent(context.repoRoot, ref, 'claim', { agentId, claim });
-      await printJson({ claimed: true, ref, claim });
+    case 'claim':
+      await runClaim(context, parsed, rest);
       return;
-    }
 
-    case 'release': {
-      const id = requireArg(rest[0], 'work item id');
-      const ref = makeRef(context, id);
-      const claimToken = getStringFlag(parsed, 'claim-token') ?? requireLocalClaimToken(context.repoRoot, ref);
-      const item = await context.tracker.getWorkItem(ref);
-      assertActiveClaimToken(item, claimToken, 'release');
-      await context.tracker.releaseClaim(ref, claimToken);
-      appendRuntimeEvent(context.repoRoot, ref, 'claim-release', { claimToken });
-      await printJson({ released: true, ref, claimToken });
+    case 'release':
+      await runRelease(context, parsed, rest);
       return;
-    }
 
     case 'state': {
       const id = requireArg(rest[0], 'work item id');
@@ -436,14 +487,14 @@ function makeRef(context: CliContext, rawId: string): WorkItemRef {
   const id = normalizeWorkItemId(rawId);
 
   if (context.platform === 'github') {
-    const owner = String(context.config.owner ?? '');
-    const repo = String(context.config.repo ?? '');
+    const owner = typeof context.config.owner === 'string' ? context.config.owner : '';
+    const repo = typeof context.config.repo === 'string' ? context.config.repo : '';
     return { platform: 'github', project: owner, container: repo, id };
   }
 
   if (context.platform === 'azure-devops') {
-    const project = String(context.config.project ?? '');
-    const organizationUrl = String(context.config.organizationUrl ?? '');
+    const project = typeof context.config.project === 'string' ? context.config.project : '';
+    const organizationUrl = typeof context.config.organizationUrl === 'string' ? context.config.organizationUrl : '';
     return { platform: 'azure-devops', project, container: organizationUrl, id };
   }
 
@@ -451,11 +502,12 @@ function makeRef(context: CliContext, rawId: string): WorkItemRef {
 }
 
 function normalizeWorkItemId(rawId: string): string {
-  const match = rawId.match(/(\d+)$/);
-  if (!match?.[1]) {
-    throw new Error(`Work item id must end with a numeric id. Received: ${rawId}`);
-  }
-  return match[1];
+    const idRegex = /(\d+)$/;
+    const execRes = idRegex.exec(rawId);
+    if (!execRes) {
+      throw new Error(`Work item id must end with a numeric id. Received: ${rawId}`);
+    }
+    return execRes[1] as string;
 }
 
 function readJson<T>(path: string): T {
@@ -491,6 +543,52 @@ function normalizeGitHubConfig(raw: Record<string, unknown>, configFile: string)
   const config: GitHubTrackerConfig = { owner, repo };
   if (labels) config.labels = labels;
   return config;
+}
+
+function getAvailableModules(repoRoot: string): Array<{ id: string; description?: string; installed: boolean; version?: string }> {
+  const manifest = readModuleManifest(repoRoot);
+  const candidates: string[] = [join(repoRoot, 'modules'), resolve(dirname(fileURLToPath(import.meta.url)), '..', 'modules'), resolve(dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'modules')];
+  const seen = new Set<string>();
+  const available: Array<{ id: string; description?: string; installed: boolean; version?: string }> = [];
+  for (const candidate of candidates) {
+    if (!existsSync(candidate)) continue;
+    readModuleDir(candidate, seen, available, manifest);
+  }
+  return available;
+}
+
+function readModuleDir(
+  candidate: string,
+  seen: Set<string>,
+  out: Array<{ id: string; description?: string; installed: boolean; version?: string }>,
+  manifest: ModuleManifest,
+): void {
+  for (const name of readdirSync(candidate)) {
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const modulePath = join(candidate, name);
+    const description = getModuleDescription(modulePath);
+    const installedRecord = manifest.modules?.[name];
+    const installed = Boolean(installedRecord);
+    const version = installedRecord?.version;
+    if (description === undefined) {
+      out.push(Object.assign({ id: name, installed }, version !== undefined ? { version } : {}));
+    } else {
+      out.push(Object.assign({ id: name, description, installed }, version !== undefined ? { version } : {}));
+    }
+  }
+}
+
+function getModuleDescription(modulePath: string): string | undefined {
+  try {
+    const readme = join(modulePath, 'README.md');
+    if (!existsSync(readme)) return undefined;
+    const text = readFileSync(readme, 'utf8');
+    const firstLine = text.split(/\r?\n/).find((l) => l.trim());
+    return firstLine ? firstLine.trim().replace(/^#\s*/, '') : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function normalizeAzureDevOpsConfig(raw: Record<string, unknown>, configFile: string): AzureDevOpsTrackerConfig {
@@ -727,8 +825,10 @@ function printHelp(path: string[], parsed: ParsedArgs): void {
 }
 
 
-main(process.argv.slice(2)).catch((error: unknown) => {
+try {
+  await main(process.argv.slice(2));
+} catch (error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   console.error(JSON.stringify({ ok: false, error: message }, null, 2));
   process.exit(1);
-});
+}

@@ -425,12 +425,21 @@ function modulesManifestPath() {
   return join(targetStack, 'modules.json');
 }
 
+function readPackageVersion() {
+  try {
+    const pkg = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf8'));
+    return pkg.version;
+  } catch {
+    return undefined;
+  }
+}
+
 function writeInstalledModule(id, extra = {}) {
   const manifest = readJson(modulesManifestPath(), { modules: {} });
   manifest.modules ??= {};
   manifest.modules[id] = {
     installedAt: new Date().toISOString(),
-    version: '0.1.1',
+    version: readPackageVersion() ?? '0.0.0',
     ...extra
   };
   writeJsonForce(modulesManifestPath(), manifest);

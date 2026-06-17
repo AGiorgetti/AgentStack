@@ -134,6 +134,23 @@ const topLevelHelp: HelpNode = {
       flags: [repoFlag],
       subcommands: [
         {
+          name: 'available',
+          summary: 'List all built-in modules (installed or not).',
+          description: 'Returns the registry of built-in modules that can be installed into a repository.',
+          usage: ['agentstack module available [--repo <repo>] [--json]'],
+          flags: [repoFlag],
+          output: {
+            description: 'Array of available modules with optional metadata.',
+            fields: [
+              { name: 'id', description: 'Module identifier such as `protocol` or `rules`.' },
+              { name: 'description', description: 'Short human-friendly description when available.' },
+              { name: 'installed', description: 'Boolean indicating whether the module is installed in the repository.' },
+              { name: 'version', description: 'When installed, the AgentStack version recorded for the module.' },
+            ],
+          },
+          subcommands: [],
+        },
+        {
           name: 'list',
           summary: 'List installed modules.',
           description: 'Returns installed modules from `.agent-stack/modules.json`.',
@@ -151,6 +168,14 @@ const topLevelHelp: HelpNode = {
           subcommands: [],
         },
       ],
+    },
+    {
+      name: 'version',
+      summary: 'Show AgentStack CLI version.',
+      description: 'Prints the AgentStack package version that the CLI was built from.',
+      usage: ['agentstack version'],
+      subcommands: [],
+      flags: [],
     },
     {
       name: 'doctor',
@@ -549,11 +574,13 @@ export function renderHelpText(path: readonly string[] = []): string {
   const help = renderHelpJson(path);
   const lines: string[] = [];
 
-  lines.push(help.fullCommand === 'agentstack' ? 'AgentStack CLI Help' : `AgentStack Help: ${help.fullCommand}`);
-  lines.push('');
-  lines.push(help.summary);
-  lines.push('');
-  lines.push(help.description);
+  lines.push(
+    help.fullCommand === 'agentstack' ? 'AgentStack CLI Help' : `AgentStack Help: ${help.fullCommand}`,
+    '',
+    help.summary,
+    '',
+    help.description,
+  );
 
   appendBlock(lines, 'Usage', help.usage.map((entry) => `  ${entry}`));
   appendBlock(lines, 'Arguments', help.arguments.map((entry) => `  ${entry.name}${entry.required ? '' : ' (optional)'}  ${entry.description}`));
@@ -581,7 +608,5 @@ function appendBlock(lines: string[], heading: string, blockLines: string[]): vo
   if (blockLines.length === 0) {
     return;
   }
-  lines.push('');
-  lines.push(`${heading}:`);
-  lines.push(...blockLines);
+  lines.push('', `${heading}:`, ...blockLines);
 }

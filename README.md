@@ -14,6 +14,59 @@ The first built-in module is `protocol`: a tracker-backed collaboration protocol
 | [Protocol Module](docs/modules/protocol/README.md) | Protocol commands, usage, assets, and architecture. |
 | [Rules Module](docs/modules/rules/README.md) | Repository rules module. |
 
+## Built-in Modules
+
+AgentStack includes several built-in modules that can be installed into a repository. Available modules in this source tree:
+
+- `protocol`: Tracker-backed collaboration protocol for humans and AI agents. Installs protocol assets under `.agent-stack/modules/protocol/` and provides `work-item`, `agent`, and protocol-related commands.
+- `rules`: Repository rules module that manages policy and validation rules for repository health.
+
+To list all built-in modules (installed or not) use:
+
+```sh
+agentstack module available
+```
+
+To list installed modules in a repository use:
+
+```sh
+agentstack module list --repo /path/to/product-repo
+```
+
+Setup instructions per module
+
+- Protocol: (GitHub)
+
+```sh
+agentstack setup protocol \
+  --target /path/to/product-repo \
+  --tracker github \
+  --github-repository OWNER/REPO \
+  --agents generic \
+  --provision-tracker \
+  --overwrite
+```
+
+- Protocol: (Azure DevOps)
+
+```sh
+agentstack setup protocol \
+  --target /path/to/product-repo \
+  --tracker azure-devops \
+  --azdo-organization https://dev.azure.com/ORG \
+  --azdo-project PROJECT \
+  --agents generic \
+  --provision-tracker \
+  --overwrite
+```
+
+- Rules:
+
+```sh
+agentstack setup rules --target /path/to/product-repo
+```
+
+
 The CLI help is the source of truth:
 
 ```sh
