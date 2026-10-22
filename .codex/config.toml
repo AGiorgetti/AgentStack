@@ -1,1 +1,48 @@
-approval_policy = "on-failure"
+# Ask only when an operation requires permissions outside this profile.
+approval_policy = "on-failure" # "on-request"
+
+# Use the development permission profile.
+default_permissions = "repo-dev"
+
+[permissions.repo-dev]
+
+# Start from the standard workspace permissions.
+extends = ":workspace"
+
+# Allow:
+# - modifications inside the repository;
+# - Git metadata inside normal, non-linked checkouts;
+# - shared NuGet package/cache locations.
+filesystem = {
+    ":workspace_roots" = {
+        "." = "write",
+        ".git" = "write"
+    },
+    "~/.nuget" = "write",
+    "~/AppData/Local/NuGet" = "write"
+}
+
+# Required by dotnet restore and NuGet metadata/audit requests.
+[permissions.repo-dev.network]
+enabled = true
+
+# Use the current Windows sandbox implementation.
+# Setup requires administrator elevation, but commands still run
+# inside restricted sandbox identities.
+[windows]
+sandbox = "elevated"
+
+# [mcp_servers.azure-devops]
+# command = "npx"
+# args = [
+#     "-y",
+#     "@azure-devops/mcp",
+#     "sidsrl",
+#     "--authentication",
+#     "envvar",
+#     "-d", "core", "work-items", "pipelines", "repositories"
+# ]
+# env_vars = ["ADO_MCP_AUTH_TOKEN"]
+
+# [mcp_servers."microsoft-learn"]
+# url = "https://learn.microsoft.com/api/mcp"
