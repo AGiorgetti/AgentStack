@@ -88,6 +88,16 @@ Requirements:
 - GitHub CLI (`gh`) for the GitHub tracker profile.
 - Azure CLI plus `azure-devops` extension for the Azure DevOps tracker profile.
 
+## Standalone Codex Skills
+
+Install [subagent-orchestrator](.agents/skills/subagent-orchestrator/SKILL.md) into your current project with the [Skills CLI](https://github.com/vercel-labs/skills):
+
+```sh
+npx skills add AGiorgetti/AgentStack --skill subagent-orchestrator --agent codex
+```
+
+From a local checkout, use its path in place of `AGiorgetti/AgentStack`. For manual installation, copy the skill directory into your project's `.agents/skills/`. Invoke it in Codex with `$subagent-orchestrator`.
+
 ## Quick Setup
 
 GitHub:
